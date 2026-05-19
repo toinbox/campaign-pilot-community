@@ -21,13 +21,16 @@ Campaign Pilot is a high-performance, developer-centric email orchestration engi
 ## 📦 Quick Start
 1. Clone this repository.
 2. Copy `.env.example` to `.env` and fill in your details.
-3. Run `docker-compose build up -d`.
-4. Access the dashboard at `http://localhost:8000`.
+3. Run `docker-compose build up -d`
+4. Access the dashboard at `http://localhost:8000`
+5. Defualt user:admin passord:admin
 
 ---
 
 ## 🛡️ Need Stealth Features?
 If you require **1:1 Desktop Client Simulation**, **Personal Account Pools (Pool Mode)**, **AI-driven Autopilot (Warm-up)**, or **Advanced Scoring**, check out our **Stealth Edition** at [MailToInbox.vip](https://mailtoinbox.vip).
+Demo version : https://cp.mailtoinbox.vip
+user:admin password:demo
 
 ## License
 MIT License - see LICENSE file for details.
