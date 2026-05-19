@@ -54,7 +54,7 @@ cp env.example .env
 # Edit .env with your settings (see Environment Variables below)
 
 # 3. Build and start
-docker-compose up --build -d
+docker compose up --build -d
 
 # 4. Open the dashboard
 # http://localhost:8080
