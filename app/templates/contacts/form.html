@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% set active_page = "contacts" %}
+
+{% block breadcrumb %}<span class="breadcrumb"><a href="/">{{ t('nav_dashboard') }}</a> / <a href="/contacts">{{ t('nav_contacts') }}</a> / {{ t('cf_breadcrumb_edit') if contact else t('cf_breadcrumb_new') }}</span>{% endblock %}
+{% block page_title %}{{ t('cf_page_title_edit') if contact else t('cf_page_title_new') }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:600px;">
+    <form method="POST" action="{{ '/contacts/' ~ contact.id ~ '/edit' if contact else '/contacts/new' }}">
+        <div class="form-group">
+            <label class="form-label">{{ t('th_email') }} *</label>
+            <input type="email" name="email" class="form-input" value="{{ contact.email if contact else '' }}" required>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">{{ t('cf_first_name') }}</label>
+                <input type="text" name="first_name" class="form-input" value="{{ contact.first_name if contact else '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ t('cf_last_name') }}</label>
+                <input type="text" name="last_name" class="form-input" value="{{ contact.last_name if contact else '' }}">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">{{ t('cf_company') }}</label>
+                <input type="text" name="company" class="form-input" value="{{ contact.company if contact else '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ t('cf_tags') }}</label>
+                <input type="text" name="tags" class="form-input" placeholder="{{ t('cf_tags_placeholder') }}" value="{{ contact.tags if contact else '' }}">
+                <div class="form-help">{{ t('cf_tags_help') }}</div>
+            </div>
+        </div>
+
+        <!-- List assignment -->
+        <div class="form-group">
+            <label class="form-label">{{ t('cf_assign_to_lists') }}</label>
+            {% if lists %}
+            <div style="display:flex;flex-direction:column;gap:6px;">
+                {% for l in lists %}
+                <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;">
+                    <input type="checkbox" name="list_ids" value="{{ l.id }}"
+                        {% if contact and l.id in contact_list_ids %}checked{% endif %}>
+                    <span style="color:var(--text-primary);">{{ l.name }}</span>
+                    {% if l.description %}
+                    <span style="font-size:12px;color:var(--text-muted);margin-left:auto;">{{ l.description }}</span>
+                    {% endif %}
+                </label>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-warning" style="margin:0;">
+                {{ t('cf_no_lists_warning') }} <a href="/lists/new" style="color:var(--warning);">{{ t('cf_create_first_list') }}</a>, {{ t('cf_to_assign_contact') }}
+            </div>
+            {% endif %}
+        </div>
+
+        {% if contact %}
+        <div class="form-group">
+            <label class="form-label">{{ t('th_status') }}</label>
+            <select name="status" class="form-select">
+                <option value="active" {{ 'selected' if contact.status == 'active' else '' }}>{{ t('contacts_status_active') }}</option>
+                <option value="unsubscribed" {{ 'selected' if contact.status == 'unsubscribed' else '' }}>{{ t('contacts_status_unsubscribed') }}</option>
+                <option value="bounced" {{ 'selected' if contact.status == 'bounced' else '' }}>{{ t('contacts_status_bounced') }}</option>
+                <option value="invalid" {{ 'selected' if contact.status == 'invalid' else '' }}>{{ t('contacts_status_invalid') }}</option>
+            </select>
+        </div>
+        {% endif %}
+
+        <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:28px;">
+            <a href="/contacts" class="btn btn-secondary">{{ t('btn_cancel') }}</a>
+            <button type="submit" class="btn btn-primary">{{ t('btn_save') if contact else t('btn_add_contact') }}</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

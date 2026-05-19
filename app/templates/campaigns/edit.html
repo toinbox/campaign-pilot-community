@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% set active_page = "campaigns" %}
+
+{% block breadcrumb %}<span class="breadcrumb"><a href="/">{{ t('nav_dashboard') }}</a> / <a href="/campaigns">{{ t('nav_campaigns') }}</a> / <a href="/campaigns/{{ campaign.id }}">{{ campaign.name }}</a> / {{ t('cform_breadcrumb_edit') }}</span>{% endblock %}
+{% block page_title %}{{ t('cform_page_title_edit') }}{% endblock %}
+
+{% block content %}
+<form method="POST" action="/campaigns/{{ campaign.id }}/edit">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div>
+            <div class="card">
+                <div class="card-title" style="margin-bottom:16px;">{{ t('cform_basic_info') }}</div>
+                <div class="form-group">
+                    <label class="form-label">{{ t('cform_name') }} *</label>
+                    <input type="text" name="name" class="form-input" value="{{ campaign.name }}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">{{ t('cform_template') }} *</label>
+                    <select name="template_id" class="form-select" required>
+                        {% for tpl in templates_list %}
+                        <option value="{{ tpl.id }}" {{ 'selected' if tpl.id == campaign.template_id else '' }}>{{ tpl.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">{{ t('cform_contact_list') }} *</label>
+                    <select name="list_id" class="form-select" required>
+                        {% for l in lists %}
+                        <option value="{{ l.id }}" {{ 'selected' if l.id == campaign.list_id else '' }}>{{ l.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title" style="margin-bottom:16px;">{{ t('throttle_settings') }}</div>
+                <div class="form-group">
+                    <label class="form-label">{{ t('cform_batch_size') }}</label>
+                    <input type="number" name="throttle_total" class="form-input" value="{{ campaign.throttle_total }}" min="1" style="max-width:200px;">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">{{ t('cform_interval_min_short') }}</label>
+                        <input type="number" name="throttle_interval_min" class="form-input" value="{{ campaign.throttle_interval_min }}" min="1" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">{{ t('cform_interval_max_short') }}</label>
+                        <input type="number" name="throttle_interval_max" class="form-input" value="{{ campaign.throttle_interval_max }}" min="1" step="1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">{{ t('cform_pause_min_short') }}</label>
+                    <input type="number" name="throttle_window_minutes" class="form-input" value="{{ campaign.throttle_window_minutes }}" min="0" style="max-width:200px;">
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="card">
+                <div class="card-title" style="margin-bottom:16px;">{{ t('cform_servers_short') }}</div>
+                <div class="form-group">
+                    <label class="form-label">{{ t('cform_rotation_mode') }}</label>
+                    <select name="server_rotation_mode" class="form-select" id="rotation-mode">
+                        <option value="round_robin" {{ 'selected' if campaign.server_rotation_mode == 'round_robin' else '' }}>Round Robin</option>
+                        <option value="batch" {{ 'selected' if campaign.server_rotation_mode == 'batch' else '' }}>Batch</option>
+                        <option value="weighted" {{ 'selected' if campaign.server_rotation_mode == 'weighted' else '' }}>Weighted</option>
+                    </select>
+                </div>
+                <div class="form-group" id="batch-size-group" style="display:{{ 'block' if campaign.server_rotation_mode == 'batch' else 'none' }};">
+                    <label class="form-label">{{ t('cform_server_batch_size') }}</label>
+                    <input type="number" name="server_batch_size" class="form-input" value="{{ campaign.server_batch_size }}" min="1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">{{ t('cform_servers_short') }}</label>
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+                        {% for s in servers %}
+                        <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg-primary);border:1px solid {{ 'var(--accent)' if s.id in selected_server_ids else 'var(--border)' }};border-radius:var(--radius);cursor:pointer;">
+                            <input type="checkbox" name="server_check" value="{{ s.id }}" onchange="updateServerIds()"
+                                {{ 'checked' if s.id in selected_server_ids else '' }}>
+                            <strong style="color:var(--text-primary);">{{ s.name }}</strong>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="server_ids" id="server-ids-input" value="{{ selected_server_ids|join(',') }}">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;">
+        <a href="/campaigns/{{ campaign.id }}" class="btn btn-secondary">{{ t('btn_cancel') }}</a>
+        <button type="submit" class="btn btn-primary">{{ t('cform_submit_save') }}</button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('rotation-mode').addEventListener('change', function() {
+    document.getElementById('batch-size-group').style.display = this.value === 'batch' ? 'block' : 'none';
+});
+function updateServerIds() {
+    const checked = document.querySelectorAll('input[name="server_check"]:checked');
+    document.getElementById('server-ids-input').value = Array.from(checked).map(c => c.value).join(',');
+    document.querySelectorAll('label:has(input[name="server_check"])').forEach(el => {
+        const cb = el.querySelector('input');
+        el.style.borderColor = cb.checked ? 'var(--accent)' : 'var(--border)';
+    });
+}
+</script>
+{% endblock %}

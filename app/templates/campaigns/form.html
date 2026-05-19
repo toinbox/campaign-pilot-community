@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+{% set active_page = "campaigns" %}
+
+{% block breadcrumb %}<span class="breadcrumb"><a href="/">{{ t('nav_dashboard') }}</a> / <a href="/campaigns">{{ t('nav_campaigns') }}</a> / {{ t('cform_breadcrumb_new') }}</span>{% endblock %}
+{% block page_title %}{{ t('btn_new_campaign') }}{% endblock %}
+
+{% block content %}
+<form method="POST" action="/campaigns/new">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <!-- Left column -->
+        <div>
+            <div class="card">
+                <div class="card-title" style="margin-bottom:16px;">{{ t('cform_basic_info') }}</div>
+                <div class="form-group">
+                    <label class="form-label">{{ t('cform_name') }} *</label>
+                    <input type="text" name="name" class="form-input" placeholder="{{ t('cform_name_placeholder') }}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">{{ t('cform_template') }} *</label>
+                    <select name="template_id" class="form-select" required>
+                        <option value="">{{ t('cform_select_template') }}</option>
+                        {% for tpl in templates_list %}
+                        <option value="{{ tpl.id }}">{{ tpl.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">{{ t('cform_contact_list') }} *</label>
+                    <select name="list_id" class="form-select" required>
+                        <option value="">{{ t('cform_select_list') }}</option>
+                        {% for l in lists %}
+                        <option value="{{ l.id }}">{{ l.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">{{ t('cform_country_filter') }}</label>
+                    <select name="target_country" class="form-select">
+                        <option value="">{{ t('cform_country_all') }}</option>
+                        <option value="CZ">🇨🇿 {{ t('country_cz') }}</option>
+                        <option value="SK">🇸🇰 {{ t('country_sk') }}</option>
+                        <option value="DE">🇩🇪 {{ t('country_de') }}</option>
+                        <option value="AT">🇦🇹 {{ t('country_at') }}</option>
+                        <option value="PL">🇵🇱 {{ t('country_pl') }}</option>
+                        <option value="HU">🇭🇺 {{ t('country_hu') }}</option>
+                        <option value="OTHER">{{ t('cform_country_other') }}</option>
+                    </select>
+                    <div class="form-help">{{ t('cform_country_help') }}</div>
+                </div>
+            </div>
+
+            <!-- Throttling -->
+            <div class="card">
+                <div class="card-title" style="margin-bottom:6px;">{{ t('throttle_settings') }}</div>
+                <div class="form-help" style="margin-bottom:20px;">{{ t('cform_throttle_intro') }}</div>
+
+                <!-- Batch size -->
+                <div class="form-group">
+                    <label class="form-label">{{ t('cform_batch_size') }}</label>
+                    <input type="number" name="throttle_total" class="form-input" value="100" min="1" id="th-total" style="max-width:200px;">
+                    <div class="form-help">{{ t('cform_batch_size_help') }}</div>
+                </div>
+
+                <!-- Interval between emails -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">{{ t('cform_interval_min') }}</label>
+                        <input type="number" name="throttle_interval_min" class="form-input" value="30" min="1" max="600" step="1" id="th-min">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">{{ t('cform_interval_max') }}</label>
+                        <input type="number" name="throttle_interval_max" class="form-input" value="42" min="1" max="600" step="1" id="th-max">
+                        <div class="form-help">{{ t('cform_interval_help') }}</div>
+                    </div>
+                </div>
+
+                <!-- Pause between batches -->
+                <div class="form-group">
+                    <label class="form-label">{{ t('cform_pause_min') }}</label>
+                    <input type="number" name="throttle_window_minutes" class="form-input" value="30" min="0" max="1440" step="1" id="th-pause" style="max-width:200px;">
+                    <div class="form-help">{{ t('cform_pause_help') }}</div>
+                </div>
+
+                <!-- Quick presets -->
+                <div style="margin-top:16px;margin-bottom:20px;">
+                    <div class="form-label" style="margin-bottom:8px;">{{ t('cform_presets') }}</div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="setPreset(50, 60, 90, 60)">🐢 {{ t('preset_careful') }}</button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="setPreset(100, 30, 42, 30)">⚖️ {{ t('preset_balanced') }}</button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="setPreset(200, 10, 18, 15)">🚀 {{ t('preset_fast') }}</button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="setPreset(50, 120, 180, 120)">🌱 {{ t('preset_warmup') }}</button>
+                    </div>
+                </div>
+
+                <!-- Live calculator -->
+                <div style="background:var(--bg-primary);padding:20px;border-radius:var(--radius);">
+                    <div id="throttle-calc" style="font-family:var(--font-mono);font-size:13px;color:var(--text-secondary);line-height:2.2;"></div>
+                </div>
+
+                <!-- Visual timeline -->
+                <div style="margin-top:16px;">
+                    <div class="form-label">{{ t('cform_timeline_label') }}</div>
+                    <div style="background:var(--bg-primary);border-radius:var(--radius);padding:12px;overflow:hidden;">
+                        <div id="timeline-viz" style="position:relative;height:30px;width:100%;border-radius:4px;"></div>
+                        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:4px;font-family:var(--font-mono);">
+                            <span>0s</span>
+                            <span>15s</span>
+                            <span>30s</span>
+                            <span>45s</span>
+                            <span>60s</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right column -->
+        <div>
+            <!-- Server Selection -->
+            <div class="card">
+                <div class="card-title" style="margin-bottom:6px;">{{ t('cform_servers_title') }}</div>
+                <div class="form-help" style="margin-bottom:20px;">{{ t('cform_servers_intro') }}</div>
+
+                <div class="form-group">
+                    <label class="form-label">{{ t('cform_rotation_mode') }}</label>
+                    <select name="server_rotation_mode" class="form-select" id="rotation-mode">
+                        <option value="round_robin">{{ t('cform_rotation_round_robin') }}</option>
+                        <option value="batch">{{ t('cform_rotation_batch') }}</option>
+                        <option value="weighted">{{ t('cform_rotation_weighted') }}</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="batch-size-group" style="display:none;">
+                    <label class="form-label">{{ t('cform_server_batch_size') }}</label>
+                    <input type="number" name="server_batch_size" class="form-input" value="50" min="1">
+                    <div class="form-help">{{ t('cform_server_batch_help') }}</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">{{ t('cform_servers_for_campaign') }}</label>
+                    {% if servers %}
+                    <div style="display:flex;flex-direction:column;gap:8px;" id="server-checkboxes">
+                        {% for s in servers %}
+                        <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:border-color 0.2s;" class="server-option">
+                            <input type="checkbox" name="server_check" value="{{ s.id }}" onchange="updateServerIds()">
+                            <div>
+                                <strong style="color:var(--text-primary);">{{ s.name }}</strong>
+                                <div style="font-size:12px;color:var(--text-muted);font-family:var(--font-mono);">{{ s.smtp_host }}</div>
+                            </div>
+                            <span class="badge badge-{{ s.status }}" style="margin-left:auto;">{{ t('status_' + s.status) }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="server_ids" id="server-ids-input" value="">
+                    {% else %}
+                    <div style="color:var(--warning);font-size:13px;padding:12px;background:var(--warning-dim);border-radius:var(--radius);">
+                        {{ t('cform_no_active_servers') }} <a href="/servers/new" style="color:var(--warning);">{{ t('cform_add_server') }}</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Info card -->
+            <div class="card" style="border-color:var(--accent);border-style:dashed;">
+                <div class="card-title" style="color:var(--accent);margin-bottom:12px;">{{ t('cform_how_title') }}</div>
+                <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
+                    <p><strong>{{ t('cform_how_batch_label') }}:</strong> {{ t('cform_how_batch_desc') }}</p>
+                    <p style="margin-top:8px;"><strong>{{ t('cform_how_pause_label') }}:</strong> {{ t('cform_how_pause_desc') }}</p>
+                    <p style="margin-top:8px;"><strong>{{ t('cform_how_repeat_label') }}:</strong> {{ t('cform_how_repeat_desc') }}</p>
+                    <p style="margin-top:12px;">
+                        {{ t('cform_how_example') }}<br>
+                        → {{ t('cform_how_example_line1') }}<br>
+                        → {{ t('cform_how_example_line2') }}<br>
+                        → {{ t('cform_how_example_line3') }}<br>
+                        → {{ t('cform_how_example_line4') }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;">
+        <a href="/campaigns" class="btn btn-secondary">{{ t('btn_cancel') }}</a>
+        <button type="submit" class="btn btn-primary">{{ t('cform_submit_create_draft') }}</button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// i18n strings for JavaScript calculator
+const I18N = {
+    interval: {{ t('calc_interval') | tojson }},
+    avg: {{ t('calc_avg') | tojson }},
+    speed: {{ t('calc_speed') | tojson }},
+    emailPerMin: {{ t('calc_email_per_min') | tojson }},
+    batchTime: {{ t('calc_batch_time') | tojson }},
+    pauseAfter: {{ t('calc_pause_after') | tojson }},
+    fullCycle: {{ t('calc_full_cycle') | tojson }},
+    emailsPerHour: {{ t('calc_emails_per_hour') | tojson }},
+    flow: {{ t('calc_flow') | tojson }},
+    emails: {{ t('calc_emails') | tojson }},
+    pause: {{ t('calc_pause') | tojson }},
+    minShort: {{ t('calc_min_short') | tojson }},
+    more: {{ t('calc_more') | tojson }},
+    noPauseLabel: {{ t('calc_no_pause_label') | tojson }},
+    warnTooFast: {{ t('calc_warn_too_fast') | tojson }},
+    warnMinMax: {{ t('calc_warn_min_max') | tojson }},
+    warnNoPause: {{ t('calc_warn_no_pause') | tojson }},
+};
+
+// Show/hide batch size for server rotation
+document.getElementById('rotation-mode').addEventListener('change', function() {
+    document.getElementById('batch-size-group').style.display =
+        this.value === 'batch' ? 'block' : 'none';
+});
+
+// Update hidden server_ids field
+function updateServerIds() {
+    const checked = document.querySelectorAll('input[name="server_check"]:checked');
+    const ids = Array.from(checked).map(c => c.value);
+    document.getElementById('server-ids-input').value = ids.join(',');
+    document.querySelectorAll('.server-option').forEach(el => {
+        const cb = el.querySelector('input[type="checkbox"]');
+        el.style.borderColor = cb.checked ? 'var(--accent)' : 'var(--border)';
+    });
+}
+
+// Quick presets
+function setPreset(total, minInt, maxInt, pause) {
+    document.getElementById('th-total').value = total;
+    document.getElementById('th-min').value = minInt;
+    document.getElementById('th-max').value = maxInt;
+    document.getElementById('th-pause').value = pause;
+    calcThrottle();
+}
+
+// Throttle calculator
+function calcThrottle() {
+    const total = parseInt(document.getElementById('th-total').value) || 100;
+    const minInt = parseFloat(document.getElementById('th-min').value) || 5;
+    const maxInt = parseFloat(document.getElementById('th-max').value) || 10;
+    const pauseMin = parseInt(document.getElementById('th-pause').value) || 0;
+
+    const avgInterval = (minInt + maxInt) / 2;
+    const batchTimeSec = total * avgInterval;
+    const batchTimeMin = (batchTimeSec / 60).toFixed(1);
+    const cycleMin = parseFloat(batchTimeMin) + pauseMin;
+    const ratePerMin = (60 / avgInterval).toFixed(1);
+    const ratePerHour = Math.round(60 / avgInterval * 60);
+    const batchesPerHour = pauseMin > 0 ? (60 / cycleMin).toFixed(1) : '∞';
+    const emailsPerHour = pauseMin > 0 ? Math.round((60 / cycleMin) * total) : ratePerHour;
+
+    let html = '';
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;">`;
+    html += `<div>⏱️ ${I18N.interval}: <strong>${minInt}s – ${maxInt}s</strong> (${I18N.avg} ${avgInterval}s)</div>`;
+    html += `<div>⚡ ${I18N.speed}: <strong>${ratePerMin} ${I18N.emailPerMin}</strong></div>`;
+    html += `<div>📦 ${I18N.batchTime} (${total} ${I18N.emails}): <strong>~${batchTimeMin} ${I18N.minShort}</strong></div>`;
+    html += `<div>⏸️ ${I18N.pauseAfter}: <strong>${pauseMin} ${I18N.minShort}</strong></div>`;
+    html += `<div>🔄 ${I18N.fullCycle}: <strong>~${cycleMin.toFixed(0)} ${I18N.minShort}</strong></div>`;
+    html += `<div>📊 ${I18N.emailsPerHour}: <strong>~${emailsPerHour}</strong></div>`;
+    html += `</div>`;
+
+    // Flow visualization
+    html += `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">`;
+    html += `<div style="color:var(--text-muted);margin-bottom:6px;">${I18N.flow}:</div>`;
+    html += `<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">`;
+    html += `<span style="background:var(--accent-dim);color:var(--accent);padding:4px 10px;border-radius:4px;font-size:12px;">📨 ${total} ${I18N.emails} (~${batchTimeMin} ${I18N.minShort})</span>`;
+    if (pauseMin > 0) {
+        html += `<span style="color:var(--text-muted);">→</span>`;
+        html += `<span style="background:var(--warning-dim);color:var(--warning);padding:4px 10px;border-radius:4px;font-size:12px;">⏸️ ${I18N.pause} ${pauseMin} ${I18N.minShort}</span>`;
+        html += `<span style="color:var(--text-muted);">→</span>`;
+        html += `<span style="background:var(--accent-dim);color:var(--accent);padding:4px 10px;border-radius:4px;font-size:12px;">📨 ${total} ${I18N.emails} (~${batchTimeMin} ${I18N.minShort})</span>`;
+        html += `<span style="color:var(--text-muted);">→ ...</span>`;
+    } else {
+        html += `<span style="color:var(--text-muted);">→</span>`;
+        html += `<span style="background:var(--accent-dim);color:var(--accent);padding:4px 10px;border-radius:4px;font-size:12px;">📨 ${I18N.more} ${total} ${I18N.emails}</span>`;
+        html += `<span style="color:var(--text-muted);">→ ... ${I18N.noPauseLabel}</span>`;
+    }
+    html += `</div></div>`;
+
+    // Warnings
+    if (avgInterval < 3) {
+        html += `<div style="margin-top:10px;color:var(--danger);">🚨 ${I18N.warnTooFast}</div>`;
+    }
+    if (minInt > maxInt) {
+        html += `<div style="margin-top:10px;color:var(--danger);">🚨 ${I18N.warnMinMax}</div>`;
+    }
+    if (pauseMin === 0 && total > 50) {
+        html += `<div style="margin-top:10px;color:var(--warning);">⚠️ ${I18N.warnNoPause}</div>`;
+    }
+
+    document.getElementById('throttle-calc').innerHTML = html;
+    drawTimeline(minInt, maxInt, total);
+}
+
+function drawTimeline(minInt, maxInt, total) {
+    const container = document.getElementById('timeline-viz');
+    container.innerHTML = '';
+    container.style.background = 'linear-gradient(90deg, var(--accent-dim) 0%, var(--bg-hover) 100%)';
+
+    let t = 0;
+    for (let i = 0; i < 30 && t <= 60; i++) {
+        const interval = minInt + Math.random() * (maxInt - minInt);
+        t += (i === 0) ? 0 : interval;
+        if (t > 60) break;
+
+        const pct = (t / 60) * 100;
+        const dot = document.createElement('div');
+        dot.style.cssText = `position:absolute;left:${pct}%;top:50%;transform:translate(-50%,-50%);width:8px;height:8px;background:var(--accent);border-radius:50%;opacity:0.8;`;
+        dot.title = `Email #${i+1} @ ${t.toFixed(1)}s`;
+        container.appendChild(dot);
+    }
+}
+
+['th-total', 'th-min', 'th-max', 'th-pause'].forEach(id => {
+    document.getElementById(id).addEventListener('input', calcThrottle);
+});
+
+calcThrottle();
+</script>
+{% endblock %}

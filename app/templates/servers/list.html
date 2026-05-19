@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% set active_page = "servers" %}
+
+{% block breadcrumb %}<span class="breadcrumb"><a href="/">{{ t('nav_dashboard') }}</a> / {{ t('servers_breadcrumb') }}</span>{% endblock %}
+{% block page_title %}{{ t('servers_breadcrumb') }}{% endblock %}
+{% block topbar_actions %}
+    <a href="/servers/new" class="btn btn-primary btn-sm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        {{ t('servers_btn_add') }}
+    </a>
+{% endblock %}
+
+{% block content %}
+
+{% if servers %}
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ t('th_name') }}</th>
+                    <th>{{ t('servers_th_smtp_host') }}</th>
+                    <th>{{ t('servers_th_from') }}</th>
+                    <th>{{ t('th_status') }}</th>
+                    <th>{{ t('servers_th_weight') }}</th>
+                    <th>{{ t('servers_th_limit_hd') }}</th>
+                    <th>{{ t('th_health') }}</th>
+                    <th>{{ t('th_actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in servers %}
+                <tr>
+                    <td><strong style="color:var(--text-primary);">{{ s.name }}</strong></td>
+                    <td class="mono">{{ s.smtp_host }}:{{ s.smtp_port }}</td>
+                    <td style="font-size:13px;">{{ s.from_email }}</td>
+                    <td><span class="badge badge-{{ s.status }}">{{ t('status_' + s.status) }}</span></td>
+                    <td class="mono">{{ s.weight }}%</td>
+                    <td class="mono">{{ s.hourly_limit }} / {{ s.daily_limit }}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="width:60px;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+                                <div style="width:{{ s.health_score }}%;height:100%;background:{% if s.health_score > 70 %}var(--accent){% elif s.health_score > 40 %}var(--warning){% else %}var(--danger){% endif %};border-radius:3px;"></div>
+                            </div>
+                            <span class="mono" style="font-size:12px;">{{ s.health_score }}%</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                            <form method="POST" action="/servers/{{ s.id }}/test" style="display:inline;">
+                                <button type="submit" class="btn btn-secondary btn-sm" title="{{ t('servers_btn_test_smtp_title') }}">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"/></svg>
+                                    SMTP
+                                </button>
+                            </form>
+                            {% if s.bounce_check_enabled %}
+                            <form method="POST" action="/servers/{{ s.id }}/test-imap" style="display:inline;">
+                                <button type="submit" class="btn btn-secondary btn-sm" title="{{ t('servers_btn_test_imap_title') }}">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"/></svg>
+                                    IMAP
+                                </button>
+                            </form>
+                            {% endif %}
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="openTestEmailModal({{ s.id }}, '{{ s.name|e }}')" title="{{ t('servers_btn_test_email_title') }}">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+                                {{ t('servers_btn_test_email') }}
+                            </button>
+                            <a href="/servers/{{ s.id }}/edit" class="btn btn-secondary btn-sm">{{ t('btn_edit') }}</a>
+                            <form method="POST" action="/servers/{{ s.id }}/delete" onsubmit="return confirm('{{ t('servers_confirm_delete')|replace('%s', s.name) }}');" style="display:inline;">
+                                <button type="submit" class="btn btn-danger btn-sm">{{ t('btn_delete') }}</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <div class="empty-icon">🖥️</div>
+        <p>{{ t('servers_empty') }}</p>
+        <a href="/servers/new" class="btn btn-primary">{{ t('servers_btn_add') }}</a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Test Email Modal -->
+<div class="modal-overlay" id="test-email-modal">
+    <div class="modal">
+        <div class="modal-title" id="test-modal-title">{{ t('test_modal_title') }}</div>
+        <form method="POST" id="test-email-form">
+            <div class="form-group">
+                <label class="form-label">{{ t('test_recipient_email') }}</label>
+                <input type="email" name="test_email" class="form-input" placeholder="vas@email.cz" required>
+            </div>
+            <div class="form-help" style="margin-bottom:12px;">{{ t('servers_test_modal_help') }}</div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeTestEmailModal()">{{ t('btn_cancel') }}</button>
+                <button type="submit" class="btn btn-primary">{{ t('test_btn_send') }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const I18N = {
+    testModalPrefix: {{ t('servers_test_modal_title_prefix') | tojson }},
+};
+
+function openTestEmailModal(serverId, serverName) {
+    document.getElementById('test-modal-title').textContent = I18N.testModalPrefix + ' ' + serverName;
+    document.getElementById('test-email-form').action = '/servers/' + serverId + '/test-email';
+    document.getElementById('test-email-modal').classList.add('open');
+}
+function closeTestEmailModal() {
+    document.getElementById('test-email-modal').classList.remove('open');
+}
+document.getElementById('test-email-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeTestEmailModal();
+});
+</script>
+{% endblock %}

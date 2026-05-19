@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% set active_page = "servers" %}
+
+{% block breadcrumb %}<span class="breadcrumb"><a href="/">{{ t('nav_dashboard') }}</a> / <a href="/servers">{{ t('servers_breadcrumb') }}</a> / {{ t('sf_breadcrumb_edit') if server else t('sf_breadcrumb_new') }}</span>{% endblock %}
+{% block page_title %}{{ t('sf_page_title_edit') if server else t('sf_page_title_new') }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 700px;">
+    <form method="POST" action="{{ '/servers/' ~ server.id ~ '/edit' if server else '/servers/new' }}">
+
+        <div class="card-title" style="margin-bottom:16px;">{{ t('sf_smtp_section') }}</div>
+
+        <div class="form-group">
+            <label class="form-label">{{ t('form_server_name') }}</label>
+            <input type="text" name="name" class="form-input" placeholder="Postal Server 1" value="{{ server.name if server else '' }}" required>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">{{ t('form_smtp_host') }}</label>
+                <input type="text" name="smtp_host" class="form-input" placeholder="postal.domena.cz" value="{{ server.smtp_host if server else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ t('form_smtp_port') }}</label>
+                <input type="number" name="smtp_port" class="form-input" placeholder="587" value="{{ server.smtp_port if server else '587' }}">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">{{ t('form_smtp_user') }}</label>
+                <input type="text" name="smtp_user" class="form-input" placeholder="user@domena.cz" value="{{ server.smtp_user if server else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ t('form_smtp_password') }}</label>
+                <input type="password" name="smtp_password" class="form-input" placeholder="••••••••" value="{{ server.smtp_password if server else '' }}" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <input type="checkbox" name="use_tls" value="1" {{ 'checked' if not server or server.use_tls else '' }}> {{ t('form_use_tls') }}
+            </label>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">{{ t('form_from_email') }}</label>
+                <input type="email" name="from_email" class="form-input" placeholder="noreply@domena.cz" value="{{ server.from_email if server else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ t('form_from_name') }}</label>
+                <input type="text" name="from_name" class="form-input" placeholder="Moje Firma" value="{{ server.from_name if server else '' }}">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">{{ t('form_tracking_domain') }}</label>
+            <input type="text" name="tracking_domain" class="form-input" placeholder="https://example.com" value="{{ server.tracking_domain if server and server.tracking_domain else '' }}">
+            <div class="form-help">{{ t('form_tracking_domain_help') }}</div>
+        </div>
+
+        <div class="form-row-3">
+            <div class="form-group">
+                <label class="form-label">{{ t('form_limit_hour') }}</label>
+                <input type="number" name="hourly_limit" class="form-input" value="{{ server.hourly_limit if server else '100' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ t('form_limit_day') }}</label>
+                <input type="number" name="daily_limit" class="form-input" value="{{ server.daily_limit if server else '500' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ t('sf_weight_label') }}</label>
+                <input type="number" name="weight" class="form-input" min="1" max="100" value="{{ server.weight if server else '50' }}">
+                <div class="form-help">{{ t('sf_weight_help') }}</div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">{{ t('th_status') }}</label>
+            <select name="status" class="form-select">
+                <option value="active" {{ 'selected' if server and server.status == 'active' else '' }}>{{ t('status_active') }}</option>
+                <option value="warmup" {{ 'selected' if server and server.status == 'warmup' else '' }}>{{ t('status_warmup') }}</option>
+                <option value="paused" {{ 'selected' if server and server.status == 'paused' else '' }}>{{ t('sf_status_paused') }}</option>
+            </select>
+        </div>
+
+        <!-- Bounce checking section -->
+        <div style="border-top:1px solid var(--border);margin-top:28px;padding-top:28px;">
+            <div class="card-title" style="margin-bottom:6px;">{{ t('sf_bounce_section') }}</div>
+            <div class="form-help" style="margin-bottom:20px;">{{ t('sf_bounce_intro') }}</div>
+
+            <div class="form-group">
+                <label class="form-label">
+                    <input type="checkbox" name="bounce_check_enabled" value="1" id="bounce-toggle"
+                        {{ 'checked' if server and server.bounce_check_enabled else '' }}
+                        onchange="toggleBounceFields()"> {{ t('sf_bounce_enable') }}
+                </label>
+            </div>
+
+            <div id="bounce-fields" style="display:{{ 'block' if server and server.bounce_check_enabled else 'none' }};">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">{{ t('sf_imap_host') }}</label>
+                        <input type="text" name="bounce_imap_host" class="form-input" placeholder="imap.domena.cz" value="{{ server.bounce_imap_host if server and server.bounce_imap_host else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">{{ t('sf_imap_port') }}</label>
+                        <input type="number" name="bounce_imap_port" class="form-input" value="{{ server.bounce_imap_port if server and server.bounce_imap_port else '993' }}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">{{ t('sf_imap_user') }}</label>
+                        <input type="text" name="bounce_imap_user" class="form-input" placeholder="bounce@domena.cz" value="{{ server.bounce_imap_user if server and server.bounce_imap_user else '' }}">
+                        <div class="form-help">{{ t('sf_imap_user_help') }}</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">{{ t('sf_imap_password') }}</label>
+                        <input type="password" name="bounce_imap_password" class="form-input" placeholder="••••••••" value="{{ server.bounce_imap_password if server and server.bounce_imap_password else '' }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <input type="checkbox" name="bounce_imap_ssl" value="1" {{ 'checked' if not server or (server and server.bounce_imap_ssl) else '' }}> {{ t('sf_use_ssl') }}
+                    </label>
+                </div>
+
+                {% if server and server.bounce_last_check %}
+                <div class="form-help" style="margin-top:8px;">{{ t('sf_last_check') }} {{ server.bounce_last_check[:19] }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:28px;">
+            <a href="/servers" class="btn btn-secondary">{{ t('btn_cancel') }}</a>
+            <button type="submit" class="btn btn-primary">{{ t('cform_submit_save') if server else t('servers_btn_add') }}</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleBounceFields() {
+    const enabled = document.getElementById('bounce-toggle').checked;
+    document.getElementById('bounce-fields').style.display = enabled ? 'block' : 'none';
+}
+</script>
+{% endblock %}

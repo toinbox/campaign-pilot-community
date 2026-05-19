@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% set active_page = "lists" %}
+
+{% block breadcrumb %}<span class="breadcrumb"><a href="/">{{ t('nav_dashboard') }}</a> / {{ t('lists_breadcrumb') }}</span>{% endblock %}
+{% block page_title %}{{ t('lists_page_title') }}{% endblock %}
+{% block topbar_actions %}
+    <a href="/lists/new" class="btn btn-primary btn-sm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        {{ t('lists_btn_new') }}
+    </a>
+{% endblock %}
+
+{% block content %}
+{% if lists %}
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ t('th_name') }}</th>
+                    <th>{{ t('lists_th_description') }}</th>
+                    <th>{{ t('lists_th_contacts_count') }}</th>
+                    <th>{{ t('th_created') }}</th>
+                    <th>{{ t('th_actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in lists %}
+                <tr>
+                    <td><strong style="color:var(--text-primary);">{{ l.name }}</strong></td>
+                    <td style="color:var(--text-muted);">{{ l.description }}</td>
+                    <td class="mono">{{ l.member_count }}</td>
+                    <td style="color:var(--text-muted);font-size:13px;">{{ l.created_at[:10] }}</td>
+                    <td>
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                            {% if l.member_count > 0 %}
+                            <!-- Export -->
+                            <a href="/lists/{{ l.id }}/export?mode=clean" class="btn btn-primary btn-sm" title="{{ t('lists_btn_export_clean_title') }}">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                {{ t('lists_btn_export_clean') }}
+                            </a>
+                            <a href="/lists/{{ l.id }}/export?mode=all" class="btn btn-secondary btn-sm" title="{{ t('lists_btn_export_all_title') }}">{{ t('lists_btn_export_all') }}</a>
+                            {% endif %}
+                            <!-- Delete -->
+                            <form method="POST" action="/lists/{{ l.id }}/delete" onsubmit="return confirm('{{ t('lists_confirm_delete_keep_contacts')|replace('%s', l.name) }}');" style="display:inline;">
+                                <input type="hidden" name="delete_contacts" value="0">
+                                <button type="submit" class="btn btn-secondary btn-sm">{{ t('lists_btn_delete_list') }}</button>
+                            </form>
+                            {% if l.member_count > 0 %}
+                            <form method="POST" action="/lists/{{ l.id }}/delete" onsubmit="return confirm('{{ t('lists_confirm_delete_with_contacts')|replace('%s', l.name)|replace('%d', l.member_count|string) }}');" style="display:inline;">
+                                <input type="hidden" name="delete_contacts" value="1">
+                                <button type="submit" class="btn btn-danger btn-sm">{{ t('lists_btn_delete_all') }}</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <p>{{ t('lists_empty') }}</p>
+        <a href="/lists/new" class="btn btn-primary">{{ t('lists_btn_create_list') }}</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

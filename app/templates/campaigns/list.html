@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% set active_page = "campaigns" %}
+
+{% block breadcrumb %}<span class="breadcrumb"><a href="/">{{ t('nav_dashboard') }}</a> / {{ t('nav_campaigns') }}</span>{% endblock %}
+{% block page_title %}{{ t('nav_campaigns') }}{% endblock %}
+{% block topbar_actions %}
+    <a href="/campaigns/new" class="btn btn-primary btn-sm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        {{ t('btn_new_campaign') }}
+    </a>
+{% endblock %}
+
+{% block content %}
+{% if campaigns %}
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ t('th_name') }}</th>
+                    <th>{{ t('th_status') }}</th>
+                    <th>{{ t('th_progress') }}</th>
+                    <th>{{ t('th_delivered') }}</th>
+                    <th>{{ t('th_bounced') }}</th>
+                    <th>{{ t('th_throttle') }}</th>
+                    <th>{{ t('th_rotation') }}</th>
+                    <th>{{ t('th_actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in campaigns %}
+                <tr>
+                    <td>
+                        <a href="/campaigns/{{ c.id }}" style="color:var(--accent);text-decoration:none;font-weight:500;">{{ c.name }}</a>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">{{ c.created_at[:10] }}</div>
+                    </td>
+                    <td><span class="badge badge-{{ c.status }}">{{ t('status_' + c.status) }}</span></td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="width:80px;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+                                {% set pct = (c.sent_count / c.total_recipients * 100) if c.total_recipients > 0 else 0 %}
+                                <div style="width:{{ pct }}%;height:100%;background:var(--accent);border-radius:3px;"></div>
+                            </div>
+                            <span class="mono" style="font-size:12px;">{{ c.sent_count }}/{{ c.total_recipients }}</span>
+                        </div>
+                    </td>
+                    <td class="mono">{{ c.delivered }}</td>
+                    <td class="mono" style="{% if c.bounced > 0 %}color:var(--danger);{% endif %}">{{ c.bounced }}</td>
+                    <td style="font-size:12px;color:var(--text-muted);">{{ c.throttle_total }} {{ t('throttle_emails_per_batch') }} / {{ c.throttle_interval_min }}-{{ c.throttle_interval_max }}s / {{ t('throttle_pause_label') }} {{ c.throttle_window_minutes }}min</td>
+                    <td style="font-size:12px;color:var(--text-muted);">{{ c.server_rotation_mode }}</td>
+                    <td>
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                            {% if c.status == 'draft' %}
+                                <form method="POST" action="/campaigns/{{ c.id }}/start" onsubmit="return confirm('{{ t('confirm_start_campaign') }}');" style="display:inline;">
+                                    <button type="submit" class="btn btn-primary btn-sm">▶ {{ t('btn_start') }}</button>
+                                </form>
+                            {% endif %}
+                            {% if c.status == 'running' %}
+                                <form method="POST" action="/campaigns/{{ c.id }}/pause" style="display:inline;">
+                                    <button type="submit" class="btn btn-secondary btn-sm">⏸ {{ t('btn_pause') }}</button>
+                                </form>
+                            {% endif %}
+                            {% if c.status == 'paused' %}
+                                <form method="POST" action="/campaigns/{{ c.id }}/resume" style="display:inline;">
+                                    <button type="submit" class="btn btn-primary btn-sm">▶ {{ t('btn_resume') }}</button>
+                                </form>
+                            {% endif %}
+                            {% if c.status in ('running', 'paused') %}
+                                <form method="POST" action="/campaigns/{{ c.id }}/stop" onsubmit="return confirm('{{ t('confirm_stop_campaign') }}');" style="display:inline;">
+                                    <button type="submit" class="btn btn-danger btn-sm">■ {{ t('btn_stop') }}</button>
+                                </form>
+                            {% endif %}
+                            <a href="/campaigns/{{ c.id }}" class="btn btn-secondary btn-sm">{{ t('btn_detail') }}</a>
+                            {% if c.status in ('draft', 'completed', 'cancelled') %}
+                                <form method="POST" action="/campaigns/{{ c.id }}/delete" onsubmit="return confirm('{{ t('confirm_delete_campaign') }}');" style="display:inline;">
+                                    <button type="submit" class="btn btn-danger btn-sm">{{ t('btn_delete') }}</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <div class="empty-icon">🚀</div>
+        <p>{{ t('empty_campaigns_long') }}</p>
+        <a href="/campaigns/new" class="btn btn-primary">{{ t('btn_create_campaign') }}</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% set active_page = "dashboard" %}
+
+{% block page_title %}{{ t('nav_dashboard') }}{% endblock %}
+
+{% block content %}
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">{{ t('dash_total_contacts') }}</div>
+        <div class="stat-value">{{ stats.total_contacts }}</div>
+        <div class="stat-sub">{{ stats.active_contacts }} {{ t('dash_active') }}{% if stats.bounced_contacts %}, <span style="color:var(--danger);">{{ stats.bounced_contacts }} {{ t('dash_bounced') }}</span>{% endif %}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">{{ t('dash_campaigns') }}</div>
+        <div class="stat-value">{{ stats.total_campaigns }}</div>
+        <div class="stat-sub">{{ stats.running_campaigns }} {{ t('dash_running') }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">{{ t('dash_sent_today') }}</div>
+        <div class="stat-value">{{ stats.sent_today }}</div>
+        <div class="stat-sub">{% if stats.bounced_today %}<span style="color:var(--danger);">{{ stats.bounced_today }} {{ t('dash_bounced') }}</span>{% else %}{{ t('dash_all_servers_total') }}{% endif %}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">{{ t('dash_servers') }}</div>
+        <div class="stat-value">{{ stats.total_servers }}</div>
+        <div class="stat-sub">{{ stats.active_servers }} {{ t('dash_active') }}</div>
+    </div>
+</div>
+
+<!-- Recent Campaigns -->
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">{{ t('dash_recent') }}</div>
+        <a href="/campaigns/new" class="btn btn-primary btn-sm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            {{ t('btn_new_campaign') }}
+        </a>
+    </div>
+    {% if recent_campaigns %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ t('th_name') }}</th>
+                    <th>{{ t('th_status') }}</th>
+                    <th>{{ t('th_sent') }}</th>
+                    <th>{{ t('th_delivered') }}</th>
+                    <th>{{ t('th_bounced') }}</th>
+                    <th>{{ t('th_created') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in recent_campaigns %}
+                <tr>
+                    <td><a href="/campaigns/{{ c.id }}" style="color:var(--accent);text-decoration:none;">{{ c.name }}</a></td>
+                    <td><span class="badge badge-{{ c.status }}">{{ t('status_' + c.status) }}</span></td>
+                    <td class="mono">{{ c.sent_count }}</td>
+                    <td class="mono">{{ c.delivered }}</td>
+                    <td class="mono">{{ c.bounced }}</td>
+                    <td style="color:var(--text-muted);">{{ c.created_at[:16] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>{{ t('empty_campaigns') }}</p>
+        <a href="/campaigns/new" class="btn btn-primary">{{ t('btn_new_campaign') }}</a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Server Status -->
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">{{ t('dash_server_status') }}</div>
+        <a href="/servers" class="btn btn-secondary btn-sm">{{ t('btn_show_all') }}</a>
+    </div>
+    {% if servers %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ t('th_server') }}</th>
+                    <th>{{ t('th_status') }}</th>
+                    <th>{{ t('dash_sent_per_hour') }}</th>
+                    <th>{{ t('dash_sent_per_day') }}</th>
+                    <th>{{ t('th_health') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in servers %}
+                <tr>
+                    <td>
+                        <strong style="color:var(--text-primary);">{{ s.name }}</strong><br>
+                        <span class="mono" style="font-size:12px;color:var(--text-muted);">{{ s.smtp_host }}</span>
+                    </td>
+                    <td><span class="badge badge-{{ s.status }}">{{ t('status_' + s.status) }}</span></td>
+                    <td class="mono">{{ s.real_sent_hour }} / {{ s.hourly_limit }}</td>
+                    <td class="mono">{{ s.real_sent_day }} / {{ s.daily_limit }}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="width:60px;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+                                <div style="width:{{ s.health_score }}%;height:100%;background:{% if s.health_score > 70 %}var(--accent){% elif s.health_score > 40 %}var(--warning){% else %}var(--danger){% endif %};border-radius:3px;"></div>
+                            </div>
+                            <span class="mono" style="font-size:12px;">{{ s.health_score }}%</span>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">🖥️</div>
+        <p>{{ t('empty_servers_long') }}</p>
+        <a href="/servers/new" class="btn btn-primary">{{ t('btn_add_server') }}</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

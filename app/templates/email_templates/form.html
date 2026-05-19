@@ -1,0 +1,424 @@
+{% extends "base.html" %}
+{% set active_page = "templates" %}
+
+{% block breadcrumb %}<span class="breadcrumb"><a href="/">{{ t('nav_dashboard') }}</a> / <a href="/templates">{{ t('etl_breadcrumb') }}</a> / {{ t('etf_breadcrumb_edit') if template else t('etf_breadcrumb_new') }}</span>{% endblock %}
+{% block page_title %}{{ t('etf_page_title_edit') if template else t('etf_page_title_new') }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .editor-tabs { display:flex; gap:0; border-bottom:1px solid var(--border); }
+    .editor-tab {
+        padding:10px 20px; font-size:13px; font-weight:500; color:var(--text-muted);
+        cursor:pointer; border:none; border-bottom:2px solid transparent;
+        background:none; font-family:var(--font-sans); transition:all 0.2s;
+    }
+    .editor-tab:hover { color:var(--text-secondary); }
+    .editor-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+    .editor-pane { display:none; }
+    .editor-pane.active { display:block; }
+    .var-btn {
+        display:inline-flex; align-items:center; padding:4px 10px;
+        background:var(--bg-primary); border:1px solid var(--border); border-radius:4px;
+        font-size:12px; font-family:var(--font-mono); color:var(--accent);
+        cursor:pointer; transition:all 0.2s;
+    }
+    .var-btn:hover { border-color:var(--accent); background:var(--accent-dim); }
+    .template-chooser { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
+    .template-option {
+        border:1px solid var(--border); border-radius:var(--radius); padding:16px;
+        cursor:pointer; transition:all 0.2s; text-align:center;
+    }
+    .template-option:hover { border-color:var(--accent); }
+    .template-option.selected { border-color:var(--accent); background:var(--accent-dim); }
+    .template-option .tpl-icon { font-size:28px; margin-bottom:8px; }
+    .template-option .tpl-name { font-size:13px; font-weight:500; color:var(--text-primary); }
+    .template-option .tpl-desc { font-size:11px; color:var(--text-muted); margin-top:4px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<form method="POST" action="{{ '/templates/' ~ template.id ~ '/edit' if template else '/templates/new' }}" id="template-form">
+    <!-- Basic info -->
+    <div class="card">
+        <div class="card-title" style="margin-bottom:16px;">{{ t('etf_basic_info') }}</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">{{ t('etf_template_name') }} *</label>
+                <input type="text" name="name" class="form-input" placeholder="{{ t('etf_name_placeholder') }}" value="{{ template.name if template else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ t('etf_email_subject') }}</label>
+                <input type="text" name="subject" class="form-input" id="subject-input" placeholder="{{ t('etf_subject_placeholder') }}" value="{{ template.subject if template else '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ t('etf_preheader') }} <span style="font-size:12px;color:var(--text-muted);">({{ t('etf_preheader_help') }})</span></label>
+                <input type="text" name="preheader" class="form-input" placeholder="{{ t('etf_preheader_placeholder') }}" value="{{ template.preheader if template else '' }}" maxlength="150">
+            </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+            <span style="font-size:12px;color:var(--text-muted);">{{ t('etf_insert_to_subject') }}</span>
+            <button type="button" class="var-btn" onclick="insertToInput('subject-input','{% raw %}{{first_name}}{% endraw %}')">{{ t('etf_var_first_name') }}</button>
+            <button type="button" class="var-btn" onclick="insertToInput('subject-input','{% raw %}{{last_name}}{% endraw %}')">{{ t('etf_var_last_name') }}</button>
+            <button type="button" class="var-btn" onclick="insertToInput('subject-input','{% raw %}{{company}}{% endraw %}')">{{ t('etf_var_company') }}</button>
+        </div>
+    </div>
+
+    {% if not template %}
+    <!-- Starter templates -->
+    <div class="card">
+        <div class="card-title" style="margin-bottom:12px;">{{ t('etf_starters_title') }}</div>
+        <div class="template-chooser">
+            <div class="template-option selected" onclick="loadStarter('newsletter')" id="tpl-newsletter">
+                <div class="tpl-icon">📰</div><div class="tpl-name">{{ t('etf_starter_newsletter') }}</div><div class="tpl-desc">{{ t('etf_starter_newsletter_desc') }}</div>
+            </div>
+            <div class="template-option" onclick="loadStarter('promo')" id="tpl-promo">
+                <div class="tpl-icon">🎯</div><div class="tpl-name">{{ t('etf_starter_promo') }}</div><div class="tpl-desc">{{ t('etf_starter_promo_desc') }}</div>
+            </div>
+            <div class="template-option" onclick="loadStarter('minimal')" id="tpl-minimal">
+                <div class="tpl-icon">✉️</div><div class="tpl-name">{{ t('etf_starter_minimal') }}</div><div class="tpl-desc">{{ t('etf_starter_minimal_desc') }}</div>
+            </div>
+            <div class="template-option" onclick="loadStarter('welcome')" id="tpl-welcome">
+                <div class="tpl-icon">👋</div><div class="tpl-name">{{ t('etf_starter_welcome') }}</div><div class="tpl-desc">{{ t('etf_starter_welcome_desc') }}</div>
+            </div>
+            <div class="template-option" onclick="loadStarter('announcement')" id="tpl-announcement">
+                <div class="tpl-icon">📢</div><div class="tpl-name">{{ t('etf_starter_announcement') }}</div><div class="tpl-desc">{{ t('etf_starter_announcement_desc') }}</div>
+            </div>
+            <div class="template-option" onclick="loadStarter('blank')" id="tpl-blank">
+                <div class="tpl-icon">📄</div><div class="tpl-name">{{ t('etf_starter_blank') }}</div><div class="tpl-desc">{{ t('etf_starter_blank_desc') }}</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Editor -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div>
+            <div class="card" style="padding:0;overflow:hidden;">
+                <div class="editor-tabs">
+                    <button type="button" class="editor-tab active" onclick="switchTab('visual')">{{ t('etf_tab_visual') }}</button>
+                    <button type="button" class="editor-tab" onclick="switchTab('html')">{{ t('etf_tab_html') }}</button>
+                </div>
+
+                <!-- Variable bar -->
+                <div style="padding:8px 16px;background:var(--bg-secondary);border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                    <span style="font-size:12px;color:var(--text-muted);">{{ t('etf_variables') }}</span>
+                    <button type="button" class="var-btn" onclick="insertVarToEditor('{% raw %}{{first_name}}{% endraw %}')">{{ t('etf_var_first_name')|lower }}</button>
+                    <button type="button" class="var-btn" onclick="insertVarToEditor('{% raw %}{{last_name}}{% endraw %}')">{{ t('etf_var_last_name')|lower }}</button>
+                    <button type="button" class="var-btn" onclick="insertVarToEditor('{% raw %}{{company}}{% endraw %}')">{{ t('etf_var_company')|lower }}</button>
+                    <button type="button" class="var-btn" onclick="insertVarToEditor('{% raw %}{{email}}{% endraw %}')">{{ t('etf_var_email') }}</button>
+                    <button type="button" class="var-btn" onclick="insertVarToEditor('{% raw %}{{unsubscribe_url}}{% endraw %}')">{{ t('etf_var_unsubscribe') }}</button>
+                </div>
+
+                <!-- Visual editor pane -->
+                <div class="editor-pane active" id="pane-visual" style="padding:0;">
+                    <div id="wysiwyg-editor-wrap">
+                        <textarea id="wysiwyg-editor" style="visibility:hidden;"></textarea>
+                    </div>
+                </div>
+
+                <!-- HTML code pane -->
+                <div class="editor-pane" id="pane-html" style="padding:16px;">
+                    <textarea id="html-editor" class="form-textarea" style="min-height:600px;font-family:var(--font-mono);font-size:13px;line-height:1.6;tab-size:2;"></textarea>
+                </div>
+            </div>
+
+            <!-- Hidden field for form submission -->
+            <input type="hidden" name="html_body" id="html-body-hidden">
+
+            <!-- Plain text -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">{{ t('etf_plain_text_title') }}</div>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="generatePlainText()">{{ t('etf_btn_generate_text') }}</button>
+                </div>
+                <textarea name="text_body" id="text-body" class="form-textarea" style="min-height:100px;font-family:var(--font-mono);font-size:13px;" placeholder="{{ t('etf_plain_text_placeholder') }}">{{ template.text_body if template else '' }}</textarea>
+            </div>
+        </div>
+
+        <!-- Preview -->
+        <div>
+            <div class="card" style="position:sticky;top:20px;">
+                <div class="card-header">
+                    <div class="card-title">{{ t('etf_preview_title') }}</div>
+                    <div style="display:flex;gap:8px;">
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="setPreviewWidth('100%')">{{ t('etf_btn_desktop') }}</button>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="setPreviewWidth('375px')">{{ t('etf_btn_mobile') }}</button>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="refreshPreview()">{{ t('etf_btn_refresh') }}</button>
+                    </div>
+                </div>
+                <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">
+                    {{ t('etf_subject_label') }} <strong style="color:var(--text-secondary);" id="subject-preview"></strong>
+                </div>
+                <div style="background:#ffffff;border-radius:var(--radius);overflow:hidden;margin:0 auto;" id="preview-container">
+                    <iframe id="preview-frame" style="width:100%;min-height:600px;border:none;" sandbox="allow-same-origin"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;">
+        <a href="/templates" class="btn btn-secondary">{{ t('btn_cancel') }}</a>
+        <button type="submit" class="btn btn-primary">{{ t('cform_submit_save') if template else t('etf_btn_create') }}</button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<!-- TinyMCE: try local first, fallback to CDN -->
+<script>
+function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+    });
+}
+async function loadTinyMCE() {
+    try {
+        await loadScript('/static/tinymce/tinymce.min.js');
+        console.log('TinyMCE loaded from local');
+    } catch(e) {
+        console.log('Local TinyMCE not found, loading from CDN...');
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js');
+    }
+    initApp();
+}
+loadTinyMCE();
+</script>
+
+<script>
+// ── Starter templates ──
+const starters = {
+    newsletter: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;margin:0;padding:0;background:#f4f4f7}.wrapper{max-width:600px;margin:0 auto;background:#fff}.header{background:#1a2235;padding:30px;text-align:center}.header h1{color:#06d6a0;margin:0;font-size:24px}.content{padding:30px;color:#333;line-height:1.6}.content h2{color:#1a2235}.btn{display:inline-block;padding:12px 30px;background:#06d6a0;color:#1a2235;text-decoration:none;border-radius:6px;font-weight:600}.footer{padding:20px 30px;text-align:center;font-size:12px;color:#999;background:#f4f4f7}.footer a{color:#999}</style></head><body><div class="wrapper"><div class="header"><h1>Vaše firma</h1></div><div class="content"><h2>Ahoj {{first_name}},</h2><p>Tady napište obsah vašeho newsletteru.</p><p><a href="#" class="btn">Zjistit více</a></p></div><div class="footer"><p>Nechcete tyto emaily? <a href="{{unsubscribe_url}}">Odhlásit se</a></p></div></div></body></html>`,
+
+    promo: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><style>body{font-family:-apple-system,sans-serif;margin:0;padding:0;background:#f4f4f7}.wrapper{max-width:600px;margin:0 auto;background:#fff}.hero{background:#1a2235;padding:50px 30px;text-align:center;color:#fff}.hero h1{margin:0 0 10px;font-size:32px}.hero .price{font-size:48px;font-weight:700;color:#06d6a0;margin:20px 0}.btn-big{display:inline-block;padding:16px 40px;background:#06d6a0;color:#1a2235;text-decoration:none;border-radius:8px;font-weight:700;font-size:18px}.content{padding:30px;color:#333;text-align:center}.footer{padding:20px 30px;text-align:center;font-size:12px;color:#999;background:#f4f4f7}.footer a{color:#999}</style></head><body><div class="wrapper"><div class="hero"><h1>Speciální nabídka</h1><p>Jen pro vás, {{first_name}}</p><div class="price">-30%</div><a href="#" class="btn-big">Využít nabídku</a></div><div class="content"><p>Platí do konce měsíce!</p></div><div class="footer"><p><a href="{{unsubscribe_url}}">Odhlásit se</a></p></div></div></body></html>`,
+
+    minimal: `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:Georgia,serif;margin:0;padding:0}.wrapper{max-width:560px;margin:0 auto;padding:40px 20px;color:#333;line-height:1.8;font-size:16px}.wrapper h2{font-size:20px}.wrapper a{color:#06d6a0}.footer{margin-top:40px;padding-top:20px;border-top:1px solid #eee;font-size:12px;color:#999}</style></head><body><div class="wrapper"><h2>Ahoj {{first_name}},</h2><p>Tady napište svůj email. Jednoduchý a osobní formát.</p><p>S pozdravem,<br>Vaše jméno</p><div class="footer"><a href="{{unsubscribe_url}}">Odhlásit se</a></div></div></body></html>`,
+
+    welcome: `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:-apple-system,sans-serif;margin:0;padding:0;background:#f4f4f7}.wrapper{max-width:600px;margin:0 auto;background:#fff}.header{background:#06d6a0;padding:40px 30px;text-align:center}.header h1{color:#1a2235;margin:0;font-size:28px}.content{padding:30px;color:#333;line-height:1.7}.btn{display:inline-block;padding:12px 30px;background:#1a2235;color:#fff;text-decoration:none;border-radius:6px;font-weight:600}.footer{padding:20px 30px;text-align:center;font-size:12px;color:#999;background:#f4f4f7}.footer a{color:#999}</style></head><body><div class="wrapper"><div class="header"><h1>Vítejte, {{first_name}}!</h1></div><div class="content"><p>Děkujeme za registraci.</p><p style="text-align:center"><a href="#" class="btn">Začít</a></p></div><div class="footer"><p><a href="{{unsubscribe_url}}">Odhlásit se</a></p></div></div></body></html>`,
+
+    announcement: `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:-apple-system,sans-serif;margin:0;padding:0;background:#f4f4f7}.wrapper{max-width:600px;margin:0 auto;background:#fff}.badge-bar{background:#06d6a0;padding:8px;text-align:center;font-size:12px;font-weight:600;color:#1a2235;text-transform:uppercase;letter-spacing:1px}.content{padding:40px 30px;color:#333;line-height:1.7}.content h1{font-size:26px;color:#1a2235}.highlight{background:#f0faf6;border-left:4px solid #06d6a0;padding:16px 20px;margin:20px 0;border-radius:0 6px 6px 0}.btn{display:inline-block;padding:12px 30px;background:#06d6a0;color:#1a2235;text-decoration:none;border-radius:6px;font-weight:600}.footer{padding:20px 30px;text-align:center;font-size:12px;color:#999;background:#f4f4f7}.footer a{color:#999}</style></head><body><div class="wrapper"><div class="badge-bar">Novinka</div><div class="content"><h1>Představujeme novinku</h1><p>Ahoj {{first_name}},</p><p>S radostí oznamujeme novou funkci.</p><div class="highlight"><strong>Co je nového:</strong><br>Popište změny.</div><p><a href="#" class="btn">Zjistit více</a></p></div><div class="footer"><p><a href="{{unsubscribe_url}}">Odhlásit se</a></p></div></div></body></html>`,
+
+    blank: `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:-apple-system,sans-serif;margin:0;padding:0}.wrapper{max-width:600px;margin:0 auto;padding:30px}</style></head><body><div class="wrapper"><p>Váš obsah zde...</p><p><a href="{{unsubscribe_url}}">Odhlásit se</a></p></div></body></html>`
+};
+
+let currentTab = 'visual';
+let tinyEditor = null;
+
+function initApp() {
+    const htmlEditor = document.getElementById('html-editor');
+
+    {% if template %}
+    htmlEditor.value = {{ template.html_body | tojson }};
+    {% else %}
+    htmlEditor.value = starters.newsletter;
+    {% endif %}
+
+    // Init TinyMCE
+    tinymce.init({
+        selector: '#wysiwyg-editor',
+        height: 650,
+        menubar: 'edit insert format table',
+        plugins: 'lists link image table code hr wordcount fullscreen',
+        toolbar: [
+            'undo redo | blocks | bold italic underline | forecolor backcolor',
+            'alignleft aligncenter alignright | bullist numlist | link image table hr | code fullscreen'
+        ],
+        content_style: `
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                font-size: 15px; line-height: 1.6; color: #333333;
+                background: #ffffff;
+                max-width: 580px; margin: 0 auto; padding: 20px;
+            }
+            img { max-width: 100%; height: auto; }
+            a { color: #06d6a0; }
+        `,
+        skin: 'oxide',
+        content_css: false,
+        branding: false,
+        promotion: false,
+        statusbar: true,
+        elementpath: false,
+        resize: true,
+        convert_urls: false,
+        relative_urls: false,
+        setup: function(editor) {
+            tinyEditor = editor;
+            editor.on('init', function() {
+                // Load body content into WYSIWYG
+                const html = htmlEditor.value;
+                const m = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+                editor.setContent(m ? m[1] : html);
+                updatePreview();
+            });
+            editor.on('change keyup input', function() {
+                syncVisualToHtml();
+                updatePreview();
+            });
+        }
+    });
+
+    // HTML editor events
+    htmlEditor.addEventListener('input', function() {
+        updatePreview();
+    });
+
+    // Subject events
+    document.getElementById('subject-input').addEventListener('input', updatePreview);
+
+    // Tab key in HTML editor
+    htmlEditor.addEventListener('keydown', function(e) {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const s = this.selectionStart;
+            this.value = this.value.substring(0, s) + '  ' + this.value.substring(this.selectionEnd);
+            this.selectionStart = this.selectionEnd = s + 2;
+        }
+    });
+
+    updatePreview();
+}
+
+// ── Sync visual editor -> HTML textarea ──
+function syncVisualToHtml() {
+    if (!tinyEditor) return;
+    const htmlEditor = document.getElementById('html-editor');
+    const fullHtml = htmlEditor.value;
+
+    // Get wrapper (everything before and after <body>)
+    const beforeMatch = fullHtml.match(/([\s\S]*<body[^>]*>)/i);
+    const afterMatch = fullHtml.match(/(<\/body>[\s\S]*)/i);
+    const before = beforeMatch ? beforeMatch[1] : '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>';
+    const after = afterMatch ? afterMatch[1] : '</body></html>';
+
+    htmlEditor.value = before + '\n' + tinyEditor.getContent() + '\n' + after;
+}
+
+// ── Sync HTML textarea -> visual editor ──
+function syncHtmlToVisual() {
+    if (!tinyEditor) return;
+    const html = document.getElementById('html-editor').value;
+    const m = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+    tinyEditor.setContent(m ? m[1] : html);
+}
+
+// ── Tab switching ──
+function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.editor-pane').forEach(p => p.classList.remove('active'));
+
+    if (tab === 'visual') {
+        document.querySelectorAll('.editor-tab')[0].classList.add('active');
+        document.getElementById('pane-visual').classList.add('active');
+        syncHtmlToVisual();
+    } else {
+        document.querySelectorAll('.editor-tab')[1].classList.add('active');
+        document.getElementById('pane-html').classList.add('active');
+        syncVisualToHtml();
+    }
+    updatePreview();
+}
+
+// ── Insert variable ──
+function insertVarToEditor(v) {
+    if (currentTab === 'visual' && tinyEditor) {
+        tinyEditor.insertContent(v);
+        syncVisualToHtml();
+    } else {
+        const el = document.getElementById('html-editor');
+        const pos = el.selectionStart;
+        el.value = el.value.slice(0, pos) + v + el.value.slice(pos);
+        el.focus();
+    }
+    updatePreview();
+}
+
+function insertToInput(id, v) {
+    const el = document.getElementById(id);
+    const pos = el.selectionStart;
+    el.value = el.value.slice(0, pos) + v + el.value.slice(pos);
+    el.focus();
+    updatePreview();
+}
+
+// ── Load starter template ──
+function loadStarter(name) {
+    document.querySelectorAll('.template-option').forEach(o => o.classList.remove('selected'));
+    const el = document.getElementById('tpl-' + name);
+    if (el) el.classList.add('selected');
+
+    const html = starters[name] || starters.blank;
+    document.getElementById('html-editor').value = html;
+
+    if (tinyEditor) {
+        const m = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+        tinyEditor.setContent(m ? m[1] : html);
+    }
+    updatePreview();
+}
+
+// ── Preview ──
+function updatePreview() {
+    const html = document.getElementById('html-editor').value;
+    const frame = document.getElementById('preview-frame');
+    const doc = frame.contentDocument || frame.contentWindow.document;
+
+    const preview = html
+        .replace(/\{\{first_name\}\}/g, 'Jan')
+        .replace(/\{\{last_name\}\}/g, 'Novák')
+        .replace(/\{\{company\}\}/g, 'Firma s.r.o.')
+        .replace(/\{\{email\}\}/g, 'jan@firma.cz')
+        .replace(/\{\{unsubscribe_url\}\}/g, '#odhlasit');
+
+    doc.open();
+    doc.write(preview);
+    doc.close();
+
+    // Subject preview
+    const subj = document.getElementById('subject-input');
+    if (subj) {
+        document.getElementById('subject-preview').textContent =
+            subj.value.replace(/\{\{first_name\}\}/g, 'Jan').replace(/\{\{last_name\}\}/g, 'Novák');
+    }
+}
+
+function refreshPreview() {
+    if (currentTab === 'visual') syncVisualToHtml();
+    updatePreview();
+}
+
+function setPreviewWidth(w) {
+    document.getElementById('preview-frame').style.width = w;
+}
+
+// ── Generate plain text ──
+function generatePlainText() {
+    let html = document.getElementById('html-editor').value;
+    let text = html
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n\n')
+        .replace(/<\/h[1-6]>/gi, '\n\n')
+        .replace(/<\/div>/gi, '\n')
+        .replace(/<hr[^>]*>/gi, '\n---\n')
+        .replace(/<a[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi, '$2 ($1)')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+    document.getElementById('text-body').value = text;
+}
+
+// ── Form submit ──
+document.getElementById('template-form').addEventListener('submit', function() {
+    if (currentTab === 'visual') syncVisualToHtml();
+    document.getElementById('html-body-hidden').value = document.getElementById('html-editor').value;
+});
+</script>
+{% endblock %}

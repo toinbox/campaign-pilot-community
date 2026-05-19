@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% set active_page = "domains" %}
+
+{% block breadcrumb %}<span class="breadcrumb"><a href="/">{{ t('nav_dashboard') }}</a> / {{ t('dom_breadcrumb') }}</span>{% endblock %}
+{% block page_title %}{{ t('dom_page_title') }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:800px;">
+    <div class="card-header">
+        <div>
+            <div class="card-title">{{ t('dom_card_title') }}</div>
+            <div class="form-help" style="margin-top:4px;">{{ t('dom_card_help') }}</div>
+        </div>
+    </div>
+
+    <!-- Add new -->
+    <form method="POST" action="/domains/new" style="display:flex;gap:12px;align-items:flex-end;margin-bottom:24px;padding:16px;background:var(--bg-primary);border-radius:var(--radius);">
+        <div style="flex:1;">
+            <label class="form-label">{{ t('dom_label_domain') }}</label>
+            <input type="text" name="domain" class="form-input" placeholder="seznam.cz" required>
+        </div>
+        <div>
+            <label class="form-label">{{ t('dom_label_max_hour') }}</label>
+            <input type="number" name="max_per_hour" class="form-input" value="100" min="1" style="width:120px;">
+        </div>
+        <div>
+            <label class="form-label">{{ t('dom_label_max_day') }}</label>
+            <input type="number" name="max_per_day" class="form-input" value="1000" min="1" style="width:120px;">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm" style="margin-bottom:2px;">{{ t('dom_btn_add') }}</button>
+    </form>
+
+    {% if domains %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ t('dom_label_domain') }}</th>
+                    <th>{{ t('dom_th_max_hour') }}</th>
+                    <th>{{ t('dom_th_max_day') }}</th>
+                    <th>{{ t('dom_th_sent_hour') }}</th>
+                    <th>{{ t('dom_th_sent_day') }}</th>
+                    <th>{{ t('th_actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in domains %}
+                <tr>
+                    <td class="mono" style="color:var(--text-primary);">
+                        {{ d.domain }}
+                        {% if d.blocked %}
+                        <span style="background:var(--danger);color:#fff;font-size:10px;padding:1px 6px;border-radius:3px;margin-left:6px;" title="{{ d.block_reason }}">{{ t('dom_badge_blocked') }}</span>
+                        {% elif d.reputation_block %}
+                        <span style="background:var(--warning);color:#fff;font-size:10px;padding:1px 6px;border-radius:3px;margin-left:6px;" title="{{ d.reputation_block }}">{{ t('dom_badge_reputation') }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="mono">{{ d.max_per_hour }}</td>
+                    <td class="mono">{{ d.max_per_day }}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="width:60px;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+                                {% set pct = (d.sent_this_hour / d.max_per_hour * 100) if d.max_per_hour > 0 else 0 %}
+                                <div style="width:{{ pct }}%;height:100%;background:{% if pct > 80 %}var(--danger){% elif pct > 50 %}var(--warning){% else %}var(--accent){% endif %};border-radius:3px;"></div>
+                            </div>
+                            <span class="mono" style="font-size:12px;">{{ d.sent_this_hour }}</span>
+                        </div>
+                    </td>
+                    <td class="mono">{{ d.sent_today }}</td>
+                    <td>
+                        {% if d.blocked %}
+                        <form method="POST" action="/domains/{{ d.id }}/unblock" style="display:inline;">
+                            <button type="submit" class="btn btn-sm" style="background:var(--success);color:#fff;">{{ t('dom_btn_unblock') }}</button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="/domains/{{ d.id }}/block" style="display:inline;">
+                            <button type="submit" class="btn btn-sm" style="background:var(--warning);color:#fff;" onclick="return confirm('{{ t('dom_confirm_block')|replace('%s', d.domain) }}')">{{ t('dom_btn_block') }}</button>
+                        </form>
+                        {% endif %}
+                        <form method="POST" action="/domains/{{ d.id }}/delete" onsubmit="return confirm('{{ t('dom_confirm_delete')|replace('%s', d.domain) }}');" style="display:inline;">
+                            <button type="submit" class="btn btn-danger btn-sm">{{ t('btn_delete') }}</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

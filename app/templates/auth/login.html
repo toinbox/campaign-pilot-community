@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang() }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CampaignPilot — {{ t('login_title') }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-card: #1a2235;
+            --border: #2a3a55;
+            --text-primary: #e2e8f0;
+            --text-secondary: #8899aa;
+            --text-muted: #5a6a7a;
+            --accent: #06d6a0;
+            --danger: #ef4444;
+            --radius: 8px;
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-sans: 'IBM Plex Sans', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated grid background */
+        body::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(6,214,160,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(6,214,160,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(60px, 60px); }
+        }
+
+        .login-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .login-logo {
+            width: 56px;
+            height: 56px;
+            background: var(--accent);
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--bg-primary);
+            font-family: var(--font-mono);
+            margin-bottom: 20px;
+        }
+
+        .login-header h1 {
+            font-family: var(--font-mono);
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 8px;
+        }
+
+        .login-header p {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .login-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: var(--font-sans);
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 600;
+            font-family: var(--font-sans);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-login:hover { background: #05c090; }
+
+        .error-msg {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.2);
+            color: var(--danger);
+            padding: 12px;
+            border-radius: var(--radius);
+            font-size: 13px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="login-logo">CP</div>
+            <h1>CampaignPilot</h1>
+            <p>{{ t('login_subtitle') }}</p>
+        </div>
+        <div class="login-card">
+            {% if error %}
+            <div class="error-msg">{{ error }}</div>
+            {% endif %}
+            <form method="POST" action="/login">
+                <div class="form-group">
+                    <label class="form-label">{{ t('login_username') }}</label>
+                    <input type="text" name="username" class="form-input" placeholder="admin" autofocus required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">{{ t('login_password') }}</label>
+                    <input type="password" name="password" class="form-input" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-login">{{ t('login_submit') }}</button>
+            </form>
+        </div>
+        <div class="login-footer">
+            {{ t('login_protected') }} &middot; {{ t('login_authorized_only') }}
+        </div>
+    </div>
+</body>
+</html>

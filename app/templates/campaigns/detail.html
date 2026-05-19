@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+{% set active_page = "campaigns" %}
+
+{% block breadcrumb %}<span class="breadcrumb"><a href="/">{{ t('nav_dashboard') }}</a> / <a href="/campaigns">{{ t('nav_campaigns') }}</a> / {{ campaign.name }}</span>{% endblock %}
+{% block page_title %}{{ campaign.name }}{% endblock %}
+
+{% block topbar_actions %}
+<div style="display:flex;gap:8px;align-items:center;">
+    <span class="badge badge-{{ campaign.status }}" style="font-size:14px;padding:6px 14px;">{{ t('status_' + campaign.status) }}</span>
+
+    {% if campaign.status == 'draft' %}
+        <form method="POST" action="/campaigns/{{ campaign.id }}/start" onsubmit="return confirm('{{ t('confirm_start_campaign_named') }} {{ campaign.name }}?');" style="display:inline;">
+            <button type="submit" class="btn btn-primary btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5,3 19,12 5,21"/></svg>
+                {{ t('btn_start') }}
+            </button>
+        </form>
+    {% endif %}
+
+    {% if campaign.status == 'running' %}
+        <form method="POST" action="/campaigns/{{ campaign.id }}/pause" style="display:inline;">
+            <button type="submit" class="btn btn-secondary btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                {{ t('btn_pause') }}
+            </button>
+        </form>
+        <form method="POST" action="/campaigns/{{ campaign.id }}/stop" onsubmit="return confirm('{{ t('confirm_stop_irreversible') }}');" style="display:inline;">
+            <button type="submit" class="btn btn-danger btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+                {{ t('btn_stop') }}
+            </button>
+        </form>
+    {% endif %}
+
+    {% if campaign.status == 'paused' %}
+        <form method="POST" action="/campaigns/{{ campaign.id }}/resume" style="display:inline;">
+            <button type="submit" class="btn btn-primary btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5,3 19,12 5,21"/></svg>
+                {{ t('btn_resume') }}
+            </button>
+        </form>
+        <form method="POST" action="/campaigns/{{ campaign.id }}/stop" onsubmit="return confirm('{{ t('confirm_stop_irreversible') }}');" style="display:inline;">
+            <button type="submit" class="btn btn-danger btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+                {{ t('btn_stop') }}
+            </button>
+        </form>
+    {% endif %}
+
+    {% if campaign.status == 'scheduled' %}
+        <form method="POST" action="/campaigns/{{ campaign.id }}/start" style="display:inline;">
+            <button type="submit" class="btn btn-primary btn-sm">{{ t('detail_btn_start_now') }}</button>
+        </form>
+        <form method="POST" action="/campaigns/{{ campaign.id }}/stop" style="display:inline;">
+            <button type="submit" class="btn btn-danger btn-sm">{{ t('btn_cancel') }}</button>
+        </form>
+    {% endif %}
+
+    <!-- Test email button -->
+    {% if campaign.status in ('draft', 'paused', 'scheduled') %}
+        <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('test-modal').classList.add('open')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+            {{ t('btn_test_email') }}
+        </button>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- Progress bar for running campaigns -->
+{% if campaign.total_recipients > 0 %}
+{% if campaign.status == 'completed' %}
+{% set progress = 100 %}
+{% else %}
+{# sent_count = COUNT(*) všech záznamů v send_log (včetně blocked, bounced, failed).
+   Nepřičítat blocked/failed znovu — dvojí započtení dávalo >100%.
+   Cap na 100 pro případ, že by total_recipients byl nižší než reálně zpracované. #}
+{% set progress_raw = (campaign.sent_count / campaign.total_recipients * 100)|round(1) %}
+{% set progress = progress_raw if progress_raw <= 100 else 100 %}
+{% endif %}
+<div class="card" style="padding:16px 24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:13px;color:var(--text-secondary);">{{ t('detail_progress') }}</span>
+        <span class="mono" style="font-size:14px;color:var(--text-primary);">{{ campaign.sent_count }} / {{ campaign.total_recipients }} ({{ progress }}%)</span>
+    </div>
+    <div style="width:100%;height:10px;background:var(--border);border-radius:5px;overflow:hidden;">
+        <div style="width:{{ progress }}%;height:100%;background:{% if campaign.status == 'running' %}var(--accent){% elif campaign.status == 'completed' %}var(--accent){% elif campaign.status == 'paused' %}var(--warning){% else %}var(--text-muted){% endif %};border-radius:5px;transition:width 0.5s;"></div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">{{ t('detail_recipients') }}</div>
+        <div class="stat-value">{{ campaign.total_recipients }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">{{ t('th_sent') }}</div>
+        <div class="stat-value" style="color:var(--accent);">{{ campaign.sent_count }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">{{ t('th_delivered') }}</div>
+        <div class="stat-value" style="color:var(--accent);">{{ campaign.delivered }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">{{ t('th_opened') }}</div>
+        <div class="stat-value" style="color:var(--info);">{{ campaign.opened }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">{{ t('th_clicked') }}</div>
+        <div class="stat-value" style="color:var(--info);">{{ campaign.clicked }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">{{ t('th_bounced') }}</div>
+        <div class="stat-value" style="color:var(--danger);">{{ campaign.bounced }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">{{ t('detail_stat_failed') }}</div>
+        <div class="stat-value" style="color:var(--danger);">{{ campaign.failed }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">{{ t('detail_stat_blocked') }}</div>
+        <div class="stat-value" style="color:var(--warning);">{{ campaign.blocked_count or 0 }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">{{ t('detail_stat_unsubscribed') }}</div>
+        <div class="stat-value" style="color:var(--warning);">{{ unsubscribed_count }}</div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+    <!-- Campaign Info -->
+    <div class="card">
+        <div class="card-title" style="margin-bottom:16px;">{{ t('detail_settings_title') }}</div>
+        <table style="width:100%;">
+            <tr>
+                <td style="padding:8px 0;color:var(--text-muted);width:160px;">{{ t('detail_template') }}</td>
+                <td style="padding:8px 0;color:var(--text-primary);">{{ template.name if template else '–' }}</td>
+            </tr>
+            <tr>
+                <td style="padding:8px 0;color:var(--text-muted);">{{ t('detail_subject') }}</td>
+                <td style="padding:8px 0;color:var(--text-secondary);font-size:13px;">{{ template.subject if template else '–' }}</td>
+            </tr>
+            <tr>
+                <td style="padding:8px 0;color:var(--text-muted);">{{ t('detail_contact_list') }}</td>
+                <td style="padding:8px 0;color:var(--text-primary);">{{ contact_list.name if contact_list else '–' }}</td>
+            </tr>
+            <tr><td colspan="2" style="border-bottom:1px solid var(--border);"></td></tr>
+            <tr>
+                <td style="padding:8px 0;color:var(--text-muted);">{{ t('detail_batch_size') }}</td>
+                <td style="padding:8px 0;" class="mono">{{ campaign.throttle_total }} {{ t('throttle_emails_per_batch') }}</td>
+            </tr>
+            <tr>
+                <td style="padding:8px 0;color:var(--text-muted);">{{ t('detail_interval') }}</td>
+                <td style="padding:8px 0;" class="mono">{{ campaign.throttle_interval_min }}s – {{ campaign.throttle_interval_max }}s</td>
+            </tr>
+            <tr>
+                <td style="padding:8px 0;color:var(--text-muted);">{{ t('detail_pause_between_batches') }}</td>
+                <td style="padding:8px 0;" class="mono">{{ campaign.throttle_window_minutes }} min{% if campaign.throttle_window_minutes == 0 %} ({{ t('detail_no_pause') }}){% endif %}</td>
+            </tr>
+            <tr>
+                <td style="padding:8px 0;color:var(--text-muted);">{{ t('detail_server_rotation') }}</td>
+                <td style="padding:8px 0;" class="mono">{{ campaign.server_rotation_mode }}{% if campaign.server_rotation_mode == 'batch' %} ({{ t('detail_rotation_per') }} {{ campaign.server_batch_size }}){% endif %}</td>
+            </tr>
+            <tr><td colspan="2" style="border-bottom:1px solid var(--border);"></td></tr>
+            <tr>
+                <td style="padding:8px 0;color:var(--text-muted);">{{ t('detail_created_at') }}</td>
+                <td style="padding:8px 0;color:var(--text-secondary);font-size:13px;">{{ campaign.created_at | prague }}</td>
+            </tr>
+            <tr>
+                <td style="padding:8px 0;color:var(--text-muted);">{{ t('detail_started_at') }}</td>
+                <td style="padding:8px 0;color:var(--text-secondary);font-size:13px;">{{ campaign.started_at | prague }}</td>
+            </tr>
+            <tr>
+                <td style="padding:8px 0;color:var(--text-muted);">{{ t('detail_completed_at') }}</td>
+                <td style="padding:8px 0;color:var(--text-secondary);font-size:13px;">{{ campaign.completed_at | prague }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Servers assigned -->
+    <div class="card">
+        <div class="card-title" style="margin-bottom:16px;">{{ t('detail_assigned_servers') }}</div>
+        {% if servers %}
+        <div style="display:flex;flex-direction:column;gap:10px;">
+            {% for s in servers %}
+            <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-primary);border-radius:var(--radius);border:1px solid var(--border);">
+                <div style="flex:1;">
+                    <strong style="color:var(--text-primary);">{{ s.name }}</strong>
+                    <div style="font-size:12px;color:var(--text-muted);font-family:var(--font-mono);">{{ s.smtp_host }}</div>
+                </div>
+                <span class="badge badge-{{ s.status }}">{{ t('status_' + s.status) }}</span>
+                <div style="text-align:right;">
+                    <div class="mono" style="font-size:13px;">{{ s.campaign_sent }} {{ t('detail_sent_label') }}</div>
+                    {% if s.campaign_bounced > 0 %}
+                    <div class="mono" style="font-size:11px;color:var(--danger);">{{ s.campaign_bounced }} {{ t('dash_bounced') }}</div>
+                    {% endif %}
+                </div>
+                <div class="mono" style="font-size:12px;">{{ s.health_score }}%</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="color:var(--text-muted);font-size:14px;">{{ t('detail_no_servers_assigned') }}</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Send Log -->
+<div class="card" style="margin-top:20px;">
+    <div class="card-header">
+        <div class="card-title">{{ t('detail_send_log_title') }}</div>
+        {% if campaign.status == 'running' %}
+        <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--accent);">
+            <div style="width:8px;height:8px;background:var(--accent);border-radius:50%;animation:pulse 2s infinite;"></div>
+            {{ t('detail_sending_in_progress') }}
+        </div>
+        {% endif %}
+    </div>
+    {% if send_log %}
+    <div class="table-wrap" style="max-height:400px;overflow-y:auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ t('th_email') }}</th>
+                    <th>{{ t('th_status') }}</th>
+                    <th>{{ t('th_server') }}</th>
+                    <th>{{ t('th_sent') }}</th>
+                    <th>{{ t('detail_th_error') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in send_log %}
+                <tr>
+                    <td class="mono" style="font-size:12px;">{{ l.email }}</td>
+                    <td><span class="badge badge-{{ l.status }}">{{ t('status_' + l.status) }}</span></td>
+                    <td class="mono" style="font-size:12px;">{{ l.server_id }}</td>
+                    <td style="font-size:12px;color:var(--text-muted);">{{ l.sent_at | prague }}</td>
+                    <td style="font-size:12px;color:var(--danger);">{{ l.error_message[:50] if l.error_message else '' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:40px;color:var(--text-muted);">
+        {{ t('detail_no_sending_yet') }}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Actions footer -->
+<div style="display:flex;gap:12px;justify-content:space-between;margin-top:24px;">
+    <a href="/campaigns" class="btn btn-secondary">← {{ t('detail_btn_back') }}</a>
+    <a href="/campaigns/{{ campaign.id }}/report" class="btn btn-secondary btn-sm">⬇ {{ t('detail_btn_download_report') }}</a>
+    <div style="display:flex;gap:12px;">
+        {% if campaign.status in ('draft', 'paused') %}
+        <a href="/campaigns/{{ campaign.id }}/edit" class="btn btn-secondary">{{ t('detail_btn_edit_campaign') }}</a>
+        {% endif %}
+        {% if campaign.status in ('completed', 'cancelled') %}
+        <a href="/campaigns/{{ campaign.id }}/edit" class="btn btn-secondary">{{ t('detail_btn_edit_campaign') }}</a>
+        <form method="POST" action="/campaigns/{{ campaign.id }}/resend" onsubmit="return confirm('{{ t('confirm_resend_campaign') }}');">
+            <button type="submit" class="btn btn-primary">{{ t('detail_btn_resend') }}</button>
+        </form>
+        {% endif %}
+        {% if campaign.status in ('draft', 'completed', 'cancelled') %}
+        <form method="POST" action="/campaigns/{{ campaign.id }}/delete" onsubmit="return confirm('{{ t('confirm_delete_campaign') }}');">
+            <button type="submit" class="btn btn-danger">{{ t('detail_btn_delete_campaign') }}</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Test Email Modal -->
+<div class="modal-overlay" id="test-modal">
+    <div class="modal">
+        <div class="modal-title">{{ t('test_modal_title') }}</div>
+        <form method="POST" action="/campaigns/{{ campaign.id }}/test-email">
+            <div class="form-group">
+                <label class="form-label">{{ t('test_recipient_email') }}</label>
+                <input type="email" name="test_email" class="form-input" placeholder="vas@email.cz" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ t('test_sending_server') }}</label>
+                <select name="test_server_id" class="form-select" required>
+                    {% for s in all_servers %}
+                    <option value="{{ s.id }}">{{ s.name }} ({{ s.from_email }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-help" style="margin-bottom:8px;">{{ t('test_help') }}</div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('test-modal').classList.remove('open')">{{ t('btn_cancel') }}</button>
+                <button type="submit" class="btn btn-primary">{{ t('test_btn_send') }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Close modal on overlay click
+document.getElementById('test-modal').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('open');
+});
+
+{% if campaign.status in ('running', 'paused', 'completed') %}
+// Auto-refresh every 10 seconds
+setInterval(function() { location.reload(); }, 10000);
+{% endif %}
+</script>
+{% endblock %}

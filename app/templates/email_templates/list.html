@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% set active_page = "templates" %}
+
+{% block breadcrumb %}<span class="breadcrumb"><a href="/">{{ t('nav_dashboard') }}</a> / {{ t('etl_breadcrumb') }}</span>{% endblock %}
+{% block page_title %}{{ t('etl_page_title') }}{% endblock %}
+{% block topbar_actions %}
+    <a href="/templates/new" class="btn btn-primary btn-sm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        {{ t('etl_btn_new') }}
+    </a>
+{% endblock %}
+
+{% block content %}
+{% if templates_list %}
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ t('th_name') }}</th>
+                    <th>{{ t('etl_th_subject') }}</th>
+                    <th>{{ t('etl_th_updated') }}</th>
+                    <th>{{ t('th_actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {# Use 'tpl' instead of 't' so we don't shadow the global t() translation function #}
+                {% for tpl in templates_list %}
+                <tr>
+                    <td><strong style="color:var(--text-primary);">{{ tpl.name }}</strong></td>
+                    <td style="color:var(--text-muted);font-size:13px;">{{ tpl.subject[:60] }}{{ '...' if tpl.subject|length > 60 else '' }}</td>
+                    <td style="color:var(--text-muted);font-size:13px;">{{ tpl.updated_at[:16] }}</td>
+                    <td>
+                        <div style="display:flex;gap:6px;">
+                            <a href="/templates/{{ tpl.id }}/edit" class="btn btn-secondary btn-sm">{{ t('btn_edit') }}</a>
+                            <form method="POST" action="/templates/{{ tpl.id }}/duplicate" style="display:inline;">
+                                <button type="submit" class="btn btn-secondary btn-sm">{{ t('etl_btn_duplicate') }}</button>
+                            </form>
+                            <form method="POST" action="/templates/{{ tpl.id }}/delete" onsubmit="return confirm('{{ t('etl_confirm_delete')|replace('%s', tpl.name) }}');" style="display:inline;">
+                                <button type="submit" class="btn btn-danger btn-sm">{{ t('btn_delete') }}</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <div class="empty-icon">📄</div>
+        <p>{{ t('etl_empty') }}</p>
+        <a href="/templates/new" class="btn btn-primary">{{ t('etl_btn_create_template') }}</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

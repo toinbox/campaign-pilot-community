@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block page_title %}{{ t('profile_page_title') }}{% endblock %}
+
+{% block breadcrumb %}<span class="breadcrumb"><a href="/">{{ t('nav_dashboard') }}</a> / {{ t('profile_breadcrumb') }}</span>{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:560px;">
+    <div class="card-header">
+        <div class="card-title">{{ t('profile_change_password_title') }}</div>
+    </div>
+
+    <div style="padding:20px 24px;">
+        {% if demo_mode %}
+        <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;padding:12px;border-radius:var(--radius);font-size:13px;margin-bottom:20px;">
+            <strong>{{ t('profile_demo_mode') }}</strong> — {{ t('profile_demo_password_disabled') }}
+        </div>
+        {% endif %}
+
+        {% if message %}
+        <div style="background:rgba(6,214,160,0.1);border:1px solid rgba(6,214,160,0.2);color:var(--accent);padding:12px;border-radius:var(--radius);font-size:13px;margin-bottom:20px;">
+            {{ message }}
+        </div>
+        {% endif %}
+
+        {% if error %}
+        <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:var(--danger);padding:12px;border-radius:var(--radius);font-size:13px;margin-bottom:20px;">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <div style="margin-bottom:24px;font-size:13px;color:var(--text-secondary);">
+            {{ t('profile_logged_as') }} <span class="mono" style="color:var(--text-primary);">{{ user }}</span>
+        </div>
+
+        <form method="POST" action="/profile" autocomplete="off">
+            <input type="hidden" name="action" value="change_password">
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label" style="display:block;font-size:13px;color:var(--text-secondary);margin-bottom:6px;">
+                    {{ t('profile_current_password') }}
+                </label>
+                <input type="password" name="current_password" class="form-input"
+                       style="width:100%;padding:10px 12px;background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-size:14px;{% if demo_mode %}opacity:0.5;cursor:not-allowed;{% endif %}"
+                       {% if demo_mode %}disabled{% else %}required autofocus{% endif %}>
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label" style="display:block;font-size:13px;color:var(--text-secondary);margin-bottom:6px;">
+                    {{ t('profile_new_password') }}
+                </label>
+                <input type="password" name="new_password" class="form-input"
+                       style="width:100%;padding:10px 12px;background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-size:14px;{% if demo_mode %}opacity:0.5;cursor:not-allowed;{% endif %}"
+                       minlength="8" {% if demo_mode %}disabled{% else %}required{% endif %}>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">
+                    {{ t('profile_password_min') }}
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:24px;">
+                <label class="form-label" style="display:block;font-size:13px;color:var(--text-secondary);margin-bottom:6px;">
+                    {{ t('profile_confirm_password') }}
+                </label>
+                <input type="password" name="new_password_confirm" class="form-input"
+                       style="width:100%;padding:10px 12px;background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-size:14px;{% if demo_mode %}opacity:0.5;cursor:not-allowed;{% endif %}"
+                       minlength="8" {% if demo_mode %}disabled{% else %}required{% endif %}>
+            </div>
+
+            <button type="submit" class="btn btn-primary"
+                    {% if demo_mode %}disabled style="opacity:0.5;cursor:not-allowed;"{% endif %}>
+                {{ t('profile_btn_change_password') }}
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="card" style="max-width:560px;margin-top:20px;">
+    <div class="card-header">
+        <div class="card-title">{{ t('profile_lang_title') }}</div>
+    </div>
+    <div style="padding:20px 24px;">
+        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
+            {{ t('profile_lang_description') }}
+        </div>
+        <form method="POST" action="/profile">
+            <input type="hidden" name="action" value="save_language">
+            <div class="form-group" style="margin-bottom:20px;">
+                <select name="preferred_language" class="form-input"
+                        style="width:100%;padding:10px 12px;background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-size:14px;">
+                    {% for code in SUPPORTED_LANGS %}
+                    <option value="{{ code }}" {% if (stored_lang or current_lang()) == code %}selected{% endif %}>
+                        {{ LANG_NAMES[code] }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">
+                    {{ t('profile_lang_active') }} <span class="mono">{{ LANG_NAMES[current_lang()] }}</span>{% if not stored_lang %} ({{ t('profile_lang_auto') }}){% endif %}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">{{ t('profile_btn_save_lang') }}</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

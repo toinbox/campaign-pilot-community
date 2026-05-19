@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% set active_page = "lists" %}
+
+{% block breadcrumb %}<span class="breadcrumb"><a href="/">{{ t('nav_dashboard') }}</a> / <a href="/lists">{{ t('lists_breadcrumb') }}</a> / {{ t('lf_breadcrumb') }}</span>{% endblock %}
+{% block page_title %}{{ t('lf_page_title') }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:500px;">
+    <form method="POST" action="/lists/new">
+        <div class="form-group">
+            <label class="form-label">{{ t('lf_name') }}</label>
+            <input type="text" name="name" class="form-input" placeholder="{{ t('lf_name_placeholder') }}" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">{{ t('lf_description') }}</label>
+            <textarea name="description" class="form-textarea" rows="3" placeholder="{{ t('lf_description_placeholder') }}"></textarea>
+        </div>
+        <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:28px;">
+            <a href="/lists" class="btn btn-secondary">{{ t('btn_cancel') }}</a>
+            <button type="submit" class="btn btn-primary">{{ t('lf_btn_create') }}</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

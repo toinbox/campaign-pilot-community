@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+{% set active_page = "contacts" %}
+
+{% block breadcrumb %}<span class="breadcrumb"><a href="/">{{ t('nav_dashboard') }}</a> / {{ t('contacts_breadcrumb') }}</span>{% endblock %}
+{% block page_title %}{{ t('nav_contacts') }}{% endblock %}
+{% block topbar_actions %}
+    {# Pass active filters to export so it downloads only what's currently filtered #}
+    {% set _qs = '?mode=clean' %}
+    {% if filter_list_id %}{% set _qs = _qs ~ '&list_id=' ~ filter_list_id %}{% endif %}
+    {% if filter_status %}{% set _qs = _qs ~ '&status=' ~ filter_status %}{% endif %}
+    {% if search %}{% set _qs = _qs ~ '&search=' ~ search %}{% endif %}
+    <div style="display:flex;gap:8px;">
+        <a href="/contacts/export{{ _qs }}" class="btn btn-secondary btn-sm" title="{{ t('contacts_btn_export_clean_title') }}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            {{ t('contacts_btn_export_clean') }}
+        </a>
+        <a href="/contacts/import" class="btn btn-secondary btn-sm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            {{ t('btn_import_csv') }}
+        </a>
+        <a href="/contacts/new" class="btn btn-primary btn-sm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            {{ t('btn_add_contact') }}
+        </a>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .contacts-table { width:100%; table-layout:fixed; border-collapse:collapse; }
+    .contacts-table th, .contacts-table td { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .contacts-table .col-check { width:36px; }
+    .contacts-table .col-email { width:22%; }
+    .contacts-table .col-name { width:13%; }
+    .contacts-table .col-lists { width:13%; }
+    .contacts-table .col-status { width:8%; }
+    .contacts-table .col-source { width:6%; }
+    .contacts-table .col-date { width:7%; }
+    .contacts-table .col-country { width:5%; text-align:center; }
+    .contacts-table .col-open { width:7%; text-align:center; }
+    .contacts-table .col-click { width:7%; text-align:center; }
+    .contacts-table .col-actions { width:8%; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Filter bar -->
+<div class="card" style="padding:14px 20px;">
+    <form method="GET" action="/contacts" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <input type="text" name="search" class="form-input" style="max-width:260px;" placeholder="{{ t('contacts_search_placeholder') }}" value="{{ search|default('') }}">
+        <select name="status" class="form-select" style="max-width:160px;">
+            <option value="">{{ t('contacts_filter_all_statuses') }}</option>
+            <option value="active" {{ 'selected' if filter_status == 'active' else '' }}>{{ t('contacts_status_active') }}</option>
+            <option value="unsubscribed" {{ 'selected' if filter_status == 'unsubscribed' else '' }}>{{ t('contacts_status_unsubscribed') }}</option>
+            <option value="bounced" {{ 'selected' if filter_status == 'bounced' else '' }}>{{ t('contacts_status_bounced') }}</option>
+            <option value="invalid" {{ 'selected' if filter_status == 'invalid' else '' }}>{{ t('contacts_status_invalid') }}</option>
+        </select>
+        <select name="list_id" class="form-select" style="max-width:180px;">
+            <option value="">{{ t('contacts_filter_all_lists') }}</option>
+            {% for l in contact_lists %}
+            <option value="{{ l.id }}" {{ 'selected' if filter_list_id == l.id else '' }}>{{ l.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-secondary btn-sm">{{ t('btn_filter') }}</button>
+        {% if search or filter_status or filter_list_id %}
+        <a href="/contacts" class="btn btn-secondary btn-sm">{{ t('btn_reset') }}</a>
+        {% endif %}
+        <span style="margin-left:auto;font-size:13px;color:var(--text-muted);">{{ t('contacts_total') }}: <strong style="color:var(--text-primary);">{{ total }}</strong></span>
+    </form>
+</div>
+
+<!-- Bulk actions bar - always visible when there are contacts -->
+{% if contacts %}
+<div class="card" style="padding:12px 20px;">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <span style="font-size:13px;color:var(--text-secondary);font-weight:500;">{{ t('contacts_bulk_actions') }}</span>
+
+        <!-- Delete selected (from checkboxes) -->
+        <form method="POST" action="/contacts/bulk-delete" id="bulk-form" onsubmit="return confirmBulkDelete();">
+            <div id="bulk-ids-container"></div>
+            <input type="hidden" name="delete_mode" value="selected">
+            <button type="submit" class="btn btn-secondary btn-sm" id="btn-delete-selected" disabled style="opacity:0.5;">
+                {{ t('contacts_bulk_delete_selected') }} (<span id="selected-count">0</span>)
+            </button>
+        </form>
+
+        <div style="width:1px;height:20px;background:var(--border);"></div>
+
+        <!-- Delete all filtered -->
+        {% if search or filter_status %}
+        <form method="POST" action="/contacts/bulk-delete" onsubmit="return confirm('{{ t('contacts_confirm_delete_filtered')|replace('%d', total|string) }}');">
+            <input type="hidden" name="delete_mode" value="all_filtered">
+            <input type="hidden" name="filter_search" value="{{ search|default('') }}">
+            <input type="hidden" name="filter_status" value="{{ filter_status|default('') }}">
+            <button type="submit" class="btn btn-danger btn-sm">{{ t('contacts_bulk_delete_filtered')|replace('%d', total|string) }}</button>
+        </form>
+        {% endif %}
+
+        <!-- Delete by status -->
+        <form method="POST" action="/contacts/bulk-delete" onsubmit="return confirm('{{ t('contacts_confirm_delete_bounced') }}');">
+            <input type="hidden" name="delete_mode" value="bounced">
+            <button type="submit" class="btn btn-danger btn-sm" style="opacity:0.8;">{{ t('contacts_bulk_delete_bounced') }}</button>
+        </form>
+
+        <form method="POST" action="/contacts/bulk-delete" onsubmit="return confirm('{{ t('contacts_confirm_delete_unsubscribed') }}');">
+            <input type="hidden" name="delete_mode" value="unsubscribed">
+            <button type="submit" class="btn btn-danger btn-sm" style="opacity:0.8;">{{ t('contacts_bulk_delete_unsubscribed') }}</button>
+        </form>
+
+        <div style="width:1px;height:20px;background:var(--border);"></div>
+
+        <form method="POST" action="/contacts/reset-stats" onsubmit="return confirm('{{ t('contacts_confirm_reset_stats') }}');">
+            <button type="submit" class="btn btn-secondary btn-sm">{{ t('contacts_bulk_reset_stats') }}</button>
+        </form>
+
+        {% if not search and not filter_status %}
+        <div style="margin-left:auto;">
+            <form method="POST" action="/contacts/bulk-delete" onsubmit="return confirm('{{ t('contacts_confirm_delete_all')|replace('%d', total|string) }}');">
+                <input type="hidden" name="delete_mode" value="all">
+                <button type="submit" class="btn btn-danger btn-sm">{{ t('contacts_bulk_delete_all') }}</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% if contacts %}
+<div class="card" style="padding:0;overflow:hidden;">
+    <table class="contacts-table">
+        <thead>
+            <tr>
+                <th class="col-check"><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)"></th>
+                <th class="col-email">{{ t('th_email') }}</th>
+                <th class="col-name">{{ t('contacts_th_name') }}</th>
+                <th class="col-lists">{{ t('contacts_th_lists') }}</th>
+                <th class="col-status">{{ t('th_status') }}</th>
+                <th class="col-source">{{ t('th_source') }}</th>
+                <th class="col-date">{{ t('contacts_th_added') }}</th>
+                <th class="col-country">{{ t('contacts_th_country') }}</th>
+                <th class="col-open">{{ t('contacts_th_opened') }}</th>
+                <th class="col-click">{{ t('contacts_th_clicked') }}</th>
+                <th class="col-actions">{{ t('th_actions') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in contacts %}
+            <tr>
+                <td class="col-check">
+                    <input type="checkbox" class="contact-check" value="{{ c.id }}" onchange="updateSelection()">
+                </td>
+                <td class="col-email" title="{{ c.email }}">
+                    <span class="mono" style="font-size:12px;">{{ c.email }}</span>
+                    {% if c.status == 'unsubscribed' %}
+                    <span style="font-size:10px;background:#3a2020;color:#ff6b6b;padding:1px 6px;border-radius:4px;margin-left:4px;">{{ t('contacts_unsubscribed_badge') }}</span>
+                    {% endif %}
+                </td>
+                <td class="col-name" title="{{ c.first_name }} {{ c.last_name }}">
+                    {{ c.first_name }} {{ c.last_name }}
+                    {% if c.company %}
+                    <div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;">{{ c.company }}</div>
+                    {% endif %}
+                </td>
+                <td class="col-lists">
+                    {% if c.list_names %}
+                    <div style="display:flex;gap:4px;flex-wrap:wrap;overflow:hidden;max-height:24px;">
+                        {% for lname in c.list_names.split(',') %}
+                        <span style="background:var(--info-dim);color:var(--info);font-size:10px;padding:2px 6px;border-radius:4px;white-space:nowrap;">{{ lname }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <span style="font-size:11px;color:var(--text-muted);">–</span>
+                    {% endif %}
+                </td>
+                <td class="col-status"><span class="badge badge-{{ c.status }}" style="font-size:11px;padding:2px 8px;">{{ t('status_' + c.status) }}</span></td>
+                <td class="col-source" style="color:var(--text-muted);font-size:12px;">{{ c.source }}</td>
+                <td class="col-date" style="color:var(--text-muted);font-size:12px;">{{ c.created_at | prague }}</td>
+                <td class="col-country" style="font-size:12px;text-align:center;" title="{{ c.geo_country_name or '' }}">
+                    {% if c.geo_country_code %}
+                    <span>{{ c.geo_country_code }}</span>
+                    {% else %}
+                    <span style="color:var(--text-muted);">–</span>
+                    {% endif %}
+                </td>
+                <td class="col-open" style="font-size:12px;text-align:center;">
+                    {% if c.open_count > 0 %}
+                    <span style="color:var(--success);font-weight:600;">{{ c.open_count }}×</span>
+                    {% else %}
+                    <span style="color:var(--text-muted);">–</span>
+                    {% endif %}
+                </td>
+                <td class="col-click" style="font-size:12px;text-align:center;">
+                    {% if c.click_count > 0 %}
+                    <span style="color:var(--accent);font-weight:600;">{{ c.click_count }}×</span>
+                    {% else %}
+                    <span style="color:var(--text-muted);">–</span>
+                    {% endif %}
+                </td>
+                <td class="col-actions">
+                    <a href="/contacts/{{ c.id }}/edit" class="btn btn-secondary btn-sm" style="padding:4px 10px;font-size:12px;">{{ t('btn_edit') }}</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div style="display:flex;justify-content:center;gap:6px;padding:16px;">
+        {% if page > 1 %}
+        <a href="/contacts?page={{ page-1 }}&search={{ search|default('') }}&status={{ filter_status|default('') }}" class="btn btn-secondary btn-sm">←</a>
+        {% endif %}
+        {% for p in range(1, total_pages + 1) %}
+            {% if p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+        <a href="/contacts?page={{ p }}&search={{ search|default('') }}&status={{ filter_status|default('') }}"
+           class="btn btn-sm {{ 'btn-primary' if p == page else 'btn-secondary' }}">{{ p }}</a>
+            {% elif p == page - 3 or p == page + 3 %}
+        <span style="color:var(--text-muted);padding:6px;">...</span>
+            {% endif %}
+        {% endfor %}
+        {% if page < total_pages %}
+        <a href="/contacts?page={{ page+1 }}&search={{ search|default('') }}&status={{ filter_status|default('') }}" class="btn btn-secondary btn-sm">→</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <div class="empty-icon">👤</div>
+        <p>{{ t('contacts_empty_long') }}</p>
+        <div style="display:flex;gap:12px;justify-content:center;">
+            <a href="/contacts/import" class="btn btn-secondary">{{ t('btn_import_csv') }}</a>
+            <a href="/contacts/new" class="btn btn-primary">{{ t('btn_add_contact') }}</a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const I18N = {
+    confirmDeleteN: {{ t('contacts_confirm_delete_n') | tojson }},
+};
+
+function toggleSelectAll(el) {
+    document.querySelectorAll('.contact-check').forEach(cb => { cb.checked = el.checked; });
+    updateSelection();
+}
+
+function updateSelection() {
+    const checked = document.querySelectorAll('.contact-check:checked');
+    const count = checked.length;
+    document.getElementById('selected-count').textContent = count;
+    const btn = document.getElementById('btn-delete-selected');
+    btn.disabled = count === 0;
+    btn.style.opacity = count > 0 ? '1' : '0.5';
+
+    // Update hidden inputs
+    const container = document.getElementById('bulk-ids-container');
+    container.innerHTML = '';
+    checked.forEach(cb => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'contact_ids';
+        input.value = cb.value;
+        container.appendChild(input);
+    });
+}
+
+function confirmBulkDelete() {
+    const count = document.querySelectorAll('.contact-check:checked').length;
+    if (count === 0) return false;
+    return confirm(I18N.confirmDeleteN.replace('%d', count));
+}
+</script>
+{% endblock %}

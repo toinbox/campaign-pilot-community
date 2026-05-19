@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang() }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CampaignPilot{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1a2235;
+            --bg-hover: #243049;
+            --border: #2a3a55;
+            --text-primary: #e2e8f0;
+            --text-secondary: #8899aa;
+            --text-muted: #5a6a7a;
+            --accent: #06d6a0;
+            --accent-dim: #06d6a022;
+            --accent-hover: #05c090;
+            --danger: #ef4444;
+            --danger-dim: #ef444422;
+            --warning: #f59e0b;
+            --warning-dim: #f59e0b22;
+            --info: #3b82f6;
+            --info-dim: #3b82f622;
+            --success: #06d6a0;
+            --radius: 8px;
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-sans: 'IBM Plex Sans', sans-serif;
+            --sidebar-w: 260px;
+            --transition: 0.2s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            padding: 24px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-logo .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--accent);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--bg-primary);
+            font-family: var(--font-mono);
+        }
+
+        .sidebar-logo .logo-text {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-logo .logo-version {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 16px 12px;
+            overflow-y: auto;
+        }
+
+        .nav-section {
+            margin-bottom: 24px;
+        }
+
+        .nav-section-title {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            padding: 0 8px;
+            margin-bottom: 8px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: var(--radius);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 400;
+            transition: all var(--transition);
+            margin-bottom: 2px;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--accent-dim);
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .nav-item .nav-icon {
+            width: 20px;
+            height: 20px;
+            opacity: 0.7;
+        }
+
+        .nav-item.active .nav-icon { opacity: 1; }
+
+        .nav-item .nav-badge {
+            margin-left: auto;
+            background: var(--accent-dim);
+            color: var(--accent);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-family: var(--font-mono);
+        }
+
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .sidebar-footer a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13px;
+            padding: 8px;
+            border-radius: var(--radius);
+            transition: all var(--transition);
+        }
+
+        .sidebar-footer a:hover {
+            color: var(--danger);
+            background: var(--danger-dim);
+        }
+
+        /* ── Main Content ── */
+        .main {
+            margin-left: var(--sidebar-w);
+            flex: 1;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            padding: 16px 32px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-secondary);
+        }
+
+        .topbar h1 {
+            font-family: var(--font-mono);
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .topbar .breadcrumb {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .topbar .breadcrumb a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .topbar .breadcrumb a:hover { color: var(--accent); }
+
+        .content {
+            padding: 32px;
+        }
+
+        /* ── Cards ── */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-family: var(--font-mono);
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        /* ── Stats Grid ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            transition: border-color var(--transition);
+        }
+
+        .stat-card:hover { border-color: var(--accent); }
+
+        .stat-label {
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-family: var(--font-mono);
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-sub {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* ── Buttons ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 500;
+            font-family: var(--font-sans);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all var(--transition);
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border-color: var(--accent);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-secondary);
+            border-color: var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--text-secondary);
+            color: var(--text-primary);
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 6px 14px;
+            font-size: 13px;
+        }
+
+        /* ── Tables ── */
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        tr:hover td { background: var(--bg-hover); }
+
+        td .mono {
+            font-family: var(--font-mono);
+            font-size: 13px;
+        }
+
+        /* ── Status Badges ── */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: var(--font-mono);
+        }
+
+        .badge-active, .badge-delivered, .badge-completed {
+            background: var(--accent-dim);
+            color: var(--accent);
+        }
+
+        .badge-paused, .badge-warning, .badge-warmup {
+            background: var(--warning-dim);
+            color: var(--warning);
+        }
+
+        .badge-error, .badge-bounced, .badge-blacklisted {
+            background: var(--danger-dim);
+            color: var(--danger);
+        }
+
+        .badge-draft, .badge-queued {
+            background: var(--info-dim);
+            color: var(--info);
+        }
+
+        .badge-running {
+            background: var(--accent-dim);
+            color: var(--accent);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* ── Forms ── */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: var(--font-sans);
+            transition: border-color var(--transition);
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .form-textarea { resize: vertical; min-height: 100px; }
+
+        .form-help {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* ── Alerts ── */
+        .alert {
+            padding: 14px 18px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-success {
+            background: var(--accent-dim);
+            color: var(--accent);
+            border: 1px solid #06d6a033;
+        }
+
+        .alert-error {
+            background: var(--danger-dim);
+            color: var(--danger);
+            border: 1px solid #ef444433;
+        }
+
+        .alert-warning {
+            background: var(--warning-dim);
+            color: var(--warning);
+            border: 1px solid #f59e0b33;
+        }
+
+        /* ── Empty State ── */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-state p {
+            font-size: 15px;
+            margin-bottom: 20px;
+        }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-title {
+            font-family: var(--font-mono);
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; }
+            .content { padding: 16px; }
+            .form-row, .form-row-3 { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">CP</div>
+            <div>
+                <div class="logo-text">CampaignPilot</div>
+                <div class="logo-version">Comunity Edition</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">{{ t('nav_overview') }}</div>
+                <a href="/" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                    {{ t('nav_dashboard') }}
+                </a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">{{ t('nav_campaigns') }}</div>
+                <a href="/campaigns" class="nav-item {% if active_page == 'campaigns' %}active{% endif %}">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+                    {{ t('nav_campaigns') }}
+                    {% if running_campaigns %}<span class="nav-badge">{{ running_campaigns }}</span>{% endif %}
+                </a>
+                <a href="/templates" class="nav-item {% if active_page == 'templates' %}active{% endif %}">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+                    {{ t('nav_templates') }}
+                </a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">{{ t('nav_contacts') }}</div>
+                <a href="/contacts" class="nav-item {% if active_page == 'contacts' %}active{% endif %}">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    {{ t('nav_contacts') }}
+                </a>
+                <a href="/lists" class="nav-item {% if active_page == 'lists' %}active{% endif %}">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                    {{ t('nav_lists') }}
+                </a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">{{ t('nav_infrastructure') }}</div>
+                <a href="/servers" class="nav-item {% if active_page == 'servers' %}active{% endif %}">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+                    {{ t('nav_servers') }}
+                </a>
+                <a href="/domains" class="nav-item {% if active_page == 'domains' %}active{% endif %}">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                    {{ t('nav_domains') }}
+                    {% if blocked_domains %}<span class="nav-badge" style="background:var(--danger);">{{ blocked_domains }}</span>{% endif %}
+                </a>
+            </div>
+        </nav>
+        <div class="sidebar-footer">
+            <form method="POST" action="/set-lang" style="margin:0 0 10px 0;">
+                <select name="lang" onchange="this.form.submit()"
+                        style="width:100%;padding:6px 10px;background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-secondary);font-size:12px;font-family:var(--font-mono);cursor:pointer;"
+                        title="{{ t('language') }}">
+                    {% for code in SUPPORTED_LANGS %}
+                    <option value="{{ code }}" {% if current_lang() == code %}selected{% endif %}>
+                        {{ code|upper }} — {{ LANG_NAMES[code] }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+            <a href="/profile">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                {{ t('nav_profile') }}
+            </a>
+            <a href="/logout">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                {{ t('nav_logout') }}
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="topbar">
+            <div>
+                {% block breadcrumb %}<span class="breadcrumb"><a href="/">{{ t('nav_dashboard') }}</a></span>{% endblock %}
+                <h1>{% block page_title %}{{ t('nav_dashboard') }}{% endblock %}</h1>
+            </div>
+            <div>
+                {% block topbar_actions %}{% endblock %}
+            </div>
+        </div>
+        <div class="content">
+            {% if flash_message %}
+            <div class="alert alert-{{ flash_type|default('success') }}">
+                {{ flash_message }}
+            </div>
+            {% endif %}
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
