@@ -1,0 +1,43 @@
+services:
+  web:
+    build: .
+    container_name: campaign-web
+    restart: unless-stopped
+    ports:
+      - "8585:8080"
+    volumes:
+      - ./app:/opt/campaign-manager/app
+      - ./data:/data
+      - ./email_templates:/email_templates
+      - ./uploads:/uploads
+      - ./logs:/logs
+      - ./geoip:/geoip
+    env_file: .env
+    depends_on:
+      - redis
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload
+
+  worker:
+    build: .
+    container_name: campaign-worker
+    restart: unless-stopped
+    volumes:
+      - ./app:/opt/campaign-manager/app
+      - ./worker:/opt/campaign-manager/worker
+      - ./data:/data
+      - ./email_templates:/email_templates
+      - ./uploads:/uploads
+      - ./logs:/logs
+      - ./geoip:/geoip
+    env_file: .env
+    depends_on:
+      - redis
+    command: celery -A worker.celery_app worker --beat --loglevel=info --concurrency=2
+
+  redis:
+    image: redis:7-alpine
+    container_name: campaign-redis
+    restart: unless-stopped
+    volumes:
+      - ./redis_data:/data
+    command: redis-server --appendonly yes

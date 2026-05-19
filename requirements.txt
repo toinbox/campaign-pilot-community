@@ -1,0 +1,15 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.0
+jinja2==3.1.4
+python-multipart==0.0.9
+aiofiles==24.1.0
+itsdangerous==2.2.0
+passlib[bcrypt]==1.7.4
+celery[redis]==5.4.0
+redis==5.0.8
+aiosmtplib==3.0.1
+python-dotenv==1.0.1
+email-validator==2.2.0
+dnspython==2.6.1
+geoip2==4.8.0
+bcrypt<4.0
