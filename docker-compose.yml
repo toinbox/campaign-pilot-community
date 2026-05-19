@@ -4,7 +4,7 @@ services:
     container_name: campaign-web
     restart: unless-stopped
     ports:
-      - "8585:8080"
+      - "8080:8080"
     volumes:
       - ./app:/opt/campaign-manager/app
       - ./data:/data
