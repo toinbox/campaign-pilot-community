@@ -22,7 +22,7 @@ Campaign Pilot is a high-performance, developer-centric email orchestration engi
 1. Clone this repository.
 2. Copy `.env.example` to `.env` and fill in your details.
 3. Run `docker-compose build up -d`
-4. Access the dashboard at `http://localhost:8000`
+4. Access the dashboard at `http://localhost:8080`
 5. Defualt user:admin passord:admin
 
 ---
