@@ -60,7 +60,7 @@ docker-compose up --build -d
 # Default credentials — user: admin / password: admin
 ```
 
-> **⚠️ Important:** Change the default `ADMIN_PASSWORD` and `SECRET_KEY` in `.env` before deploying to production.
+> **⚠️ Important:** Change the default Profile `ADMIN_PASSWORD` and `SECRET_KEY` in `.env` before deploying to production.
 
 ## Environment Variables
 
