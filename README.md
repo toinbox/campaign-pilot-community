@@ -49,7 +49,7 @@ git clone https://github.com/toinbox/campaign-pilot.git
 cd campaign-pilot
 
 # 2. Configure environment
-cp .env.example .env
+cp env.example .env
 # Edit .env with your settings (see Environment Variables below)
 
 # 3. Build and start
