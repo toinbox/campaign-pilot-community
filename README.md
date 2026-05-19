@@ -7,7 +7,7 @@
 
 <p align="center">
   <a href="https://github.com/toinbox/campaign-pilot/blob/community/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
-  <img src="https://img.shields.io/badge/python-3.10%2B-brightgreen.svg" alt="Python 3.10+">
+  <img src="https://img.shields.io/badge/python-3.12-brightgreen.svg" alt="Python 3.12">
   <img src="https://img.shields.io/badge/FastAPI-0.100%2B-009688.svg" alt="FastAPI">
   <img src="https://img.shields.io/badge/docker--compose-ready-2496ED.svg?logo=docker&logoColor=white" alt="Docker Compose">
   <img src="https://img.shields.io/badge/redis-7-DC382D.svg?logo=redis&logoColor=white" alt="Redis 7">
@@ -30,9 +30,10 @@ Campaign Pilot is a high-performance, developer-centric email orchestration engi
 
 | Component   | Technology                |
 |-------------|---------------------------|
-| Backend     | FastAPI (Python 3.10+)    |
+| Backend     | FastAPI (Python 3.12)     |
 | Task Queue  | Celery + Redis 7          |
 | Database    | SQLite (WAL mode)         |
+| Email Editor| TinyMCE 6 + MJML          |
 | Environment | Docker & Docker Compose   |
 
 ## Prerequisites
@@ -60,7 +61,9 @@ docker-compose up --build -d
 # Default credentials — user: admin / password: admin
 ```
 
-> **⚠️ Important:** Change the default Profile `ADMIN_PASSWORD` and `SECRET_KEY` in `.env` before deploying to production.
+> **⚠️ Important:** Change Profile the default `ADMIN_PASSWORD` and `SECRET_KEY` in `.env` before deploying to production.
+
+> **Local development (without Docker):** Run `./install_tinymce.sh` from the project root to install the TinyMCE editor. Docker builds handle this automatically.
 
 ## Environment Variables
 
@@ -78,6 +81,24 @@ docker-compose up --build -d
 | `WEB_PORT`       | Web server port                          | `8080`                      |
 | `APP_BASE_URL`   | Public URL of the application            | `http://yourdomain.com`     |
 
+## Running Multiple Campaigns
+
+The default `docker-compose.yml` starts Celery with `--concurrency=2`, which supports **one campaign at a time** (each campaign uses 2 worker slots). To run multiple campaigns simultaneously, increase the concurrency value in the worker service command:
+
+```yaml
+# docker-compose.yml — worker service
+command: celery -A worker.celery_app worker --beat --loglevel=info --concurrency=4
+```
+
+| Concurrency | Simultaneous Campaigns |
+|:-----------:|:----------------------:|
+| 2           | 1                      |
+| 4           | 2                      |
+| 6           | 3                      |
+| 8           | 4                      |
+
+> **Note:** Higher concurrency uses more RAM and CPU. Monitor your server resources when increasing this value.
+
 ## Project Structure
 
 ```
@@ -88,6 +109,7 @@ campaign-pilot/
 ├── Dockerfile            # Container build instructions
 ├── docker-compose.yml    # Service orchestration
 ├── requirements.txt      # Python dependencies
+├── install_tinymce.sh    # TinyMCE install for local dev (Docker handles this automatically)
 ├── env.example           # Environment variable template
 ├── LICENSE               # MIT License
 └── README.md
