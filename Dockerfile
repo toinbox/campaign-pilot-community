@@ -19,15 +19,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app/ app/
 COPY worker/ worker/
 
-# Download TinyMCE AFTER app copy — so it doesn't get overwritten
-RUN mkdir -p app/static/tinymce && \
-    curl -sL "https://download.tiny.cloud/tinymce/community/tinymce_6.8.2.zip" -o /tmp/tinymce.zip && \
-    unzip -q /tmp/tinymce.zip -d /tmp/tinymce_extract && \
-    cp -r /tmp/tinymce_extract/tinymce/js/tinymce/* app/static/tinymce/ && \
-    rm -rf /tmp/tinymce.zip /tmp/tinymce_extract
+# Entrypoint — auto-installs TinyMCE on first start
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Runtime dirs
 RUN mkdir -p /data /email_templates /uploads /logs
 
 EXPOSE 8080
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
