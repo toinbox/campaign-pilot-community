@@ -19,7 +19,7 @@ Campaign Pilot is a high-performance, developer-centric email orchestration engi
 
 ## Key Features
 
-- **Intelligent SMTP Throttling** — Atomic hourly and daily limits per SMTP server and per recipient domain (Gmail, Outlook, Yahoo, etc.) enforced via Redis Lua scripts.
+- **Intelligent SMTP Throttling** — Atomic hourly and daily limits per SMTP server and per recipient domain enforced via Redis Lua scripts.
 - **Multi-Server Pool** — Unlimited SMTP servers with Round-Robin, Batch, or Weighted rotation strategies.
 - **IP Warmup System** — Automated exponential escalation of daily sending limits for new servers.
 - **IMAP Bounce Scrubber** — Automated RFC 3464 DSN parsing to keep your recipient lists clean.
@@ -93,27 +93,67 @@ campaign-pilot/
 └── README.md
 ```
 
-## Contributing
+## Full Version
 
-Contributions are welcome! To get started:
+This Community Edition includes the core SMTP sending engine. The **[Full Version](https://mailtoinbox.vip)** adds a second sending engine (Pool Mode), advanced deliverability tools, and campaign analytics.
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/my-feature`)
-3. Commit your changes (`git commit -m 'Add my feature'`)
-4. Push to the branch (`git push origin feature/my-feature`)
-5. Open a Pull Request
+### Sending Engine
 
-Please make sure your code follows the existing style and includes appropriate tests where applicable.
+| Feature | Community | Full |
+|---|:---:|:---:|
+| SMTP server pool (Round-Robin, Weighted, Batch) | ✅ | ✅ |
+| Per-server & per-domain hourly/daily limits | ✅ | ✅ |
+| IP Warmup with exponential escalation | ✅ | ✅ |
+| Pool Mode — sending via personal email accounts | — | ✅ |
+| 1:1 Desktop Client MIME simulation | — | ✅ |
+| Per-account SOCKS4/5 proxy support | — | ✅ |
+| Rolling 24h window throttling (no midnight reset) | — | ✅ |
 
-## Security
+### Deliverability & Anti-Fingerprinting
 
-If you discover a security vulnerability, please **do not** open a public issue. Instead, contact us directly at the email listed in our GitHub profile. We take security seriously and will respond promptly.
+| Feature | Community | Full |
+|---|:---:|:---:|
+| IMAP Bounce Scrubber (RFC 3464 DSN) | ✅ | ✅ |
+| Spin System (up to 7 message variations) | — | ✅ |
+| Shuffle Deck rotation per account | — | ✅ |
+| Nested Spintax engine | — | ✅ |
+| HTML structural noise (unique per email) | — | ✅ |
+| Link uniquification | — | ✅ |
+| Preheader generation | — | ✅ |
+| Bridge URL via Cloudflare Workers | — | ✅ |
 
-## Stealth Edition
+### Automation & Analytics
 
-Need advanced capabilities like 1:1 Desktop Client Simulation, Personal Account Pools, Autopilot Warm-up, or Deliverability Scoring? Check out the **[Stealth Edition](https://mailtoinbox.vip)**.
+| Feature | Community | Full |
+|---|:---:|:---:|
+| Campaign scheduling | ✅ | ✅ |
+| Autopilot — automatic reputation building | — | ✅ |
+| Night pause with biorhythm simulation | — | ✅ |
+| Scoring — reply detection & campaign analytics | — | ✅ |
+| Scoring export (Markdown reports) | — | ✅ |
 
-A live demo is available at [cp.mailtoinbox.vip](https://cp.mailtoinbox.vip) (user: `admin` / password: `demo`).
+### Contact & Account Management
+
+| Feature | Community | Full |
+|---|:---:|:---:|
+| CSV import with field mapping | ✅ | ✅ |
+| Contact lists with status tracking | ✅ | ✅ |
+| GeoIP country detection | ✅ | ✅ |
+| MX email validation | ✅ | ✅ |
+| Pool account inbox (read, reply, delete, move) | — | ✅ |
+| Multi-provider support (10+ providers) | — | ✅ |
+| Pool account health monitoring | — | ✅ |
+
+### General
+
+| Feature | Community | Full |
+|---|:---:|:---:|
+| Multilingual UI (EN, CS, DE, RU, ES) | ✅ | ✅ |
+| Docker deployment | ✅ | ✅ |
+| Open-tracking & click-tracking (SMTP) | ✅ | ✅ |
+| Full data sovereignty — everything in your container | ✅ | ✅ |
+
+🔗 **Try it live:** [cp.mailtoinbox.vip](https://cp.mailtoinbox.vip) (user: `admin` / password: `demo`)
 
 ## License
 
