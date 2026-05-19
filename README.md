@@ -28,7 +28,7 @@ Campaign Pilot is a high-performance, developer-centric email orchestration engi
 ---
 
 ## 🛡️ Need Stealth Features?
-If you require **1:1 Desktop Client Simulation**, **Personal Account Pools (Pool Mode)**, **AI-driven Autopilot (Warm-up)**, or **Advanced Scoring**, check out our **Stealth Edition** at [MailToInbox.vip](https://mailtoinbox.vip).
+If you require **1:1 Desktop Client Simulation**, **Personal Account Pools (Pool Mode)**, **Autopilot (Warm-up)**, or **Advanced Scoring**, check out our **Stealth Edition** at [MailToInbox.vip](https://mailtoinbox.vip).
 Demo version : https://cp.mailtoinbox.vip
 user:admin password:demo
 
