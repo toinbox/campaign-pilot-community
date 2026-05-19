@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/toinbox/campaign-pilot/blob/comunity/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="https://github.com/toinbox/campaign-pilot/blob/community/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/python-3.10%2B-brightgreen.svg" alt="Python 3.10+">
   <img src="https://img.shields.io/badge/FastAPI-0.100%2B-009688.svg" alt="FastAPI">
   <img src="https://img.shields.io/badge/docker--compose-ready-2496ED.svg?logo=docker&logoColor=white" alt="Docker Compose">
@@ -89,6 +89,7 @@ campaign-pilot/
 ├── docker-compose.yml    # Service orchestration
 ├── requirements.txt      # Python dependencies
 ├── env.example           # Environment variable template
+├── LICENSE               # MIT License
 └── README.md
 ```
 
