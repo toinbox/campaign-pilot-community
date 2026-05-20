@@ -1,5 +1,5 @@
 <p align="center">
-  <h1 align="center">Campaign Pilot — Community Edition</h1>
+  <h1 align="center">CampaignPilot — Community Edition</h1>
   <p align="center">
     Self-hosted SMTP engine with intelligent throttling and multi-server rotation.
   </p>
