@@ -19,7 +19,8 @@ Campaign Pilot is a high-performance, developer-centric email orchestration engi
 
 ## Key Features
 
-- **Intelligent SMTP Throttling** — Atomic hourly and daily limits per SMTP server and per recipient domain enforced via Redis Lua scripts.
+- **Intelligent SMTP Throttling** — Atomic hourly and daily limits per SMTP server and per recipient domain enforced via Redis Lua scripts. Configurable rate limits per target domain protect your sender reputation.
+- **Domain Reputation Protection** — Automatic detection of domain-level blocks and reputation issues. If a recipient domain returns a negative reputation signal, it is automatically blocked to prevent further deliverability damage.
 - **Multi-Server Pool** — Unlimited SMTP servers with Round-Robin, Batch, or Weighted rotation strategies.
 - **IP Warmup System** — Automated exponential escalation of daily sending limits for new servers.
 - **IMAP Bounce Scrubber** — Automated RFC 3464 DSN parsing to keep your recipient lists clean.
@@ -61,7 +62,7 @@ docker compose up --build -d
 # Default credentials — user: admin / password: admin
 ```
 
-> **⚠️ Important:** Change Profile the default `ADMIN_PASSWORD` and `SECRET_KEY` in `.env` before deploying to production.
+> **⚠️ Important:** Change the Profile default `ADMIN_PASSWORD` and `SECRET_KEY` in `.env` before deploying to production.
 
 > **Local development (without Docker):** Run `./install_tinymce.sh` from the project root to install the TinyMCE editor. Docker builds handle this automatically.
 
@@ -108,8 +109,9 @@ campaign-pilot/
 ├── geoip/                # GeoIP data for geo-based analytics
 ├── Dockerfile            # Container build instructions
 ├── docker-compose.yml    # Service orchestration
+├── entrypoint.sh         # Container startup (auto-installs TinyMCE)
 ├── requirements.txt      # Python dependencies
-├── install_tinymce.sh    # TinyMCE install for local dev (Docker handles this automatically)
+├── install_tinymce.sh    # TinyMCE install for local dev without Docker
 ├── env.example           # Environment variable template
 ├── LICENSE               # MIT License
 └── README.md
@@ -136,12 +138,13 @@ This Community Edition includes the core SMTP sending engine. The **[Full Versio
 | Feature | Community | Full |
 |---|:---:|:---:|
 | IMAP Bounce Scrubber (RFC 3464 DSN) | ✅ | ✅ |
+| Domain reputation protection & auto-blocking | ✅ | ✅ |
 | Spin System (up to 7 message variations) | — | ✅ |
 | Shuffle Deck rotation per account | — | ✅ |
 | Nested Spintax engine | — | ✅ |
 | HTML structural noise (unique per email) | — | ✅ |
 | Link uniquification | — | ✅ |
-| Preheader generation | — | ✅ |
+| Preheader generation | ✅ | ✅ |
 | Bridge URL via Cloudflare Workers | — | ✅ |
 
 ### Automation & Analytics
