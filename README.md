@@ -86,7 +86,7 @@ docker compose up --build -d
 | `WEB_PORT`       | Web server port                          | `8080`                      |
 | `APP_BASE_URL`   | Public URL where the app is running      | `http://yourdomain.com`     |
 
-> **📊 Tracking:** For open-tracking and click-tracking to work, `APP_BASE_URL` must be set to the actual public domain where Campaign Pilot is running (e.g. `https://mail.yourdomain.com`). Without this, tracking pixels and click links will point to an invalid address.
+> **📊 Tracking:** Open-tracking and click-tracking URLs are configured per SMTP server via the Tracking Domain field in server settings. This always takes priority. APP_BASE_URL serves only as a fallback — in most setups you can leave it empty.
 
 ## Running Multiple Campaigns
 
