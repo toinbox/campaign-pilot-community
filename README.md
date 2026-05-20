@@ -56,7 +56,7 @@ cd campaign-pilot
 
 # 2. Configure environment
 cp env.example .env
-# Edit env with your settings (see Environment Variables below)
+# Edit .env with your settings (see Environment Variables below)
 
 # 3. Build and start
 docker compose up --build -d
@@ -66,7 +66,7 @@ docker compose up --build -d
 # Default credentials — user: admin / password: admin
 ```
 
-> **⚠️ Important:** Change the Profile default `ADMIN_PASSWORD` and `SECRET_KEY` in `.env` before deploying to production.
+> **⚠️ Important:** Change the Webui profile default `ADMIN_PASSWORD` and `SECRET_KEY` in `.env` before deploying to production.
 
 > **Local development (without Docker):** Run `./install_tinymce.sh` from the project root to install the TinyMCE editor. Docker builds handle this automatically.
 
@@ -84,7 +84,9 @@ docker compose up --build -d
 | `REDIS_URL`      | Redis connection URL                     | `redis://redis:6379/0`      |
 | `WEB_HOST`       | Web server bind address                  | `0.0.0.0`                   |
 | `WEB_PORT`       | Web server port                          | `8080`                      |
-| `APP_BASE_URL`   | Public URL of the application            | `http://yourdomain.com`     |
+| `APP_BASE_URL`   | Public URL where the app is running      | `http://yourdomain.com`     |
+
+> **📊 Tracking:** For open-tracking and click-tracking to work, `APP_BASE_URL` must be set to the actual public domain where Campaign Pilot is running (e.g. `https://mail.yourdomain.com`). Without this, tracking pixels and click links will point to an invalid address.
 
 ## Running Multiple Campaigns
 
