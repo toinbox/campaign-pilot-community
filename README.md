@@ -17,6 +17,10 @@
 
 Campaign Pilot is a high-performance, developer-centric email orchestration engine built with **FastAPI**, **Celery**, and **Redis**. It gives you absolute control over your sending infrastructure — without the limitations and costs of standard SaaS platforms.
 
+<p align="center">
+  <img src="docs/dashboard.png" alt="Campaign Pilot Dashboard" width="800">
+</p>
+
 ## Key Features
 
 - **Intelligent SMTP Throttling** — Atomic hourly and daily limits per SMTP server and per recipient domain enforced via Redis Lua scripts. Configurable rate limits per target domain protect your sender reputation.
@@ -52,7 +56,7 @@ cd campaign-pilot
 
 # 2. Configure environment
 cp env.example .env
-# Edit .env with your settings (see Environment Variables below)
+# Edit env with your settings (see Environment Variables below)
 
 # 3. Build and start
 docker compose up --build -d
@@ -107,6 +111,7 @@ campaign-pilot/
 ├── app/                  # FastAPI application (routes, models, templates)
 ├── worker/               # Celery worker (SMTP sending, bounce scrubbing)
 ├── geoip/                # GeoIP data for geo-based analytics
+├── docs/                 # Screenshots and documentation assets
 ├── Dockerfile            # Container build instructions
 ├── docker-compose.yml    # Service orchestration
 ├── entrypoint.sh         # Container startup (auto-installs TinyMCE)
