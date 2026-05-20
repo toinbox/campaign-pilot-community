@@ -15,7 +15,7 @@
 
 ---
 
-Campaign Pilot is a high-performance, developer-centric email orchestration engine built with **FastAPI**, **Celery**, and **Redis**. It gives you absolute control over your sending infrastructure — without the limitations and costs of standard SaaS platforms.
+Campaign Pilot is a high-performance, developer-centric email orchestration engine built with **FastAPI**, **Celery**, and **Redis**. It gives you absolute control over your sending infrastructure - without the limitations and costs of standard SaaS platforms.
 
 <p align="center">
   <img src="docs/dashboard.png" alt="Campaign Pilot Dashboard" width="800">
@@ -23,13 +23,13 @@ Campaign Pilot is a high-performance, developer-centric email orchestration engi
 
 ## Key Features
 
-- **Intelligent SMTP Throttling** — Atomic hourly and daily limits per SMTP server and per recipient domain enforced via Redis Lua scripts. Configurable rate limits per target domain protect your sender reputation.
-- **Domain Reputation Protection** — Automatic detection of domain-level blocks and reputation issues. If a recipient domain returns a negative reputation signal, it is automatically blocked to prevent further deliverability damage.
-- **Multi-Server Pool** — Unlimited SMTP servers with Round-Robin, Batch, or Weighted rotation strategies.
-- **IP Warmup System** — Automated exponential escalation of daily sending limits for new servers.
-- **IMAP Bounce Scrubber** — Automated RFC 3464 DSN parsing to keep your recipient lists clean.
-- **Multilingual UI** — Fully translated into English, Czech, German, Russian, and Spanish.
-- **Dockerized Deployment** — Production-ready in minutes via `docker-compose`.
+- **Intelligent SMTP Throttling** - Atomic hourly and daily limits per SMTP server and per recipient domain enforced via Redis Lua scripts. Configurable rate limits per target domain protect your sender reputation.
+- **Domain Reputation Protection** - Automatic detection of domain-level blocks and reputation issues. If a recipient domain returns a negative reputation signal, it is automatically blocked to prevent further deliverability damage.
+- **Multi-Server Pool** - Unlimited SMTP servers with Round-Robin, Batch, or Weighted rotation strategies.
+- **IP Warmup System** - Automated exponential escalation of daily sending limits for new servers.
+- **IMAP Bounce Scrubber** - Automated RFC 3464 DSN parsing to keep your recipient lists clean.
+- **Multilingual UI** - Fully translated into English, Czech, German, Russian, and Spanish.
+- **Dockerized Deployment** - Production-ready in minutes via `docker-compose`.
 
 ## Tech Stack
 
@@ -86,7 +86,7 @@ docker compose up --build -d
 | `WEB_PORT`       | Web server port                          | `8080`                      |
 | `APP_BASE_URL`   | Public URL where the app is running      | `http://yourdomain.com`     |
 
-> **📊 Tracking:** Open-tracking and click-tracking URLs are configured per SMTP server via the Tracking Domain field in server settings. This always takes priority. APP_BASE_URL serves only as a fallback — in most setups you can leave it empty.
+> **📊 Tracking:** Open-tracking and click-tracking URLs are configured per SMTP server via the Tracking Domain field in server settings. This always takes priority. APP_BASE_URL serves only as a fallback - in most setups you can leave it empty.
 
 ## Running Multiple Campaigns
 
@@ -135,10 +135,10 @@ This Community Edition includes the core SMTP sending engine. The **[Full Versio
 | SMTP server pool (Round-Robin, Weighted, Batch) | ✅ | ✅ |
 | Per-server & per-domain hourly/daily limits | ✅ | ✅ |
 | IP Warmup with exponential escalation | ✅ | ✅ |
-| Pool Mode — sending via personal email accounts | — | ✅ |
-| 1:1 Desktop Client MIME simulation | — | ✅ |
-| Per-account SOCKS4/5 proxy support | — | ✅ |
-| Rolling 24h window throttling (no midnight reset) | — | ✅ |
+| Pool Mode — sending via personal email accounts | - | ✅ |
+| 1:1 Desktop Client MIME simulation | - | ✅ |
+| Per-account SOCKS4/5 proxy support | - | ✅ |
+| Rolling 24h window throttling (no midnight reset) | - | ✅ |
 
 ### Deliverability & Anti-Fingerprinting
 
@@ -146,23 +146,23 @@ This Community Edition includes the core SMTP sending engine. The **[Full Versio
 |---|:---:|:---:|
 | IMAP Bounce Scrubber (RFC 3464 DSN) | ✅ | ✅ |
 | Domain reputation protection & auto-blocking | ✅ | ✅ |
-| Spin System (up to 7 message variations) | — | ✅ |
-| Shuffle Deck rotation per account | — | ✅ |
-| Nested Spintax engine | — | ✅ |
-| HTML structural noise (unique per email) | — | ✅ |
-| Link uniquification | — | ✅ |
+| Spin System (up to 7 message variations) | - | ✅ |
+| Shuffle Deck rotation per account | - | ✅ |
+| Nested Spintax engine | - | ✅ |
+| HTML structural noise (unique per email) | - | ✅ |
+| Link uniquification | - | ✅ |
 | Preheader generation | ✅ | ✅ |
-| Bridge URL via Cloudflare Workers | — | ✅ |
+| Bridge URL via Cloudflare Workers | - | ✅ |
 
 ### Automation & Analytics
 
 | Feature | Community | Full |
 |---|:---:|:---:|
 | Campaign scheduling | ✅ | ✅ |
-| Autopilot — automatic reputation building | — | ✅ |
-| Night pause with biorhythm simulation | — | ✅ |
-| Scoring — reply detection & campaign analytics | — | ✅ |
-| Scoring export (Markdown reports) | — | ✅ |
+| Autopilot — automatic reputation building | - | ✅ |
+| Night pause with biorhythm simulation | - | ✅ |
+| Scoring — reply detection & campaign analytics | - | ✅ |
+| Scoring export (Markdown reports) | - | ✅ |
 
 ### Contact & Account Management
 
@@ -172,9 +172,9 @@ This Community Edition includes the core SMTP sending engine. The **[Full Versio
 | Contact lists with status tracking | ✅ | ✅ |
 | GeoIP country detection | ✅ | ✅ |
 | MX email validation | ✅ | ✅ |
-| Pool account inbox (read, reply, delete, move) | — | ✅ |
-| Multi-provider support (10+ providers) | — | ✅ |
-| Pool account health monitoring | — | ✅ |
+| Pool account inbox (read, reply, delete, move) | - | ✅ |
+| Multi-provider support (10+ providers) | - | ✅ |
+| Pool account health monitoring | - | ✅ |
 
 ### General
 
@@ -189,4 +189,4 @@ This Community Edition includes the core SMTP sending engine. The **[Full Versio
 
 ## License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
