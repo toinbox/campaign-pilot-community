@@ -135,7 +135,7 @@ This Community Edition includes the core SMTP sending engine. The **[Full Versio
 | SMTP server pool (Round-Robin, Weighted, Batch) | ✅ | ✅ |
 | Per-server & per-domain hourly/daily limits | ✅ | ✅ |
 | IP Warmup with exponential escalation | ✅ | ✅ |
-| Pool Mode — sending via personal email accounts | - | ✅ |
+| Pool Mode - sending via personal email accounts | - | ✅ |
 | 1:1 Desktop Client MIME simulation | - | ✅ |
 | Per-account SOCKS4/5 proxy support | - | ✅ |
 | Rolling 24h window throttling (no midnight reset) | - | ✅ |
@@ -159,9 +159,9 @@ This Community Edition includes the core SMTP sending engine. The **[Full Versio
 | Feature | Community | Full |
 |---|:---:|:---:|
 | Campaign scheduling | ✅ | ✅ |
-| Autopilot — automatic reputation building | - | ✅ |
+| Autopilot - automatic reputation building | - | ✅ |
 | Night pause with biorhythm simulation | - | ✅ |
-| Scoring — reply detection & campaign analytics | - | ✅ |
+| Scoring - reply detection & campaign analytics | - | ✅ |
 | Scoring export (Markdown reports) | - | ✅ |
 
 ### Contact & Account Management
@@ -183,7 +183,7 @@ This Community Edition includes the core SMTP sending engine. The **[Full Versio
 | Multilingual UI (EN, CS, DE, RU, ES) | ✅ | ✅ |
 | Docker deployment | ✅ | ✅ |
 | Open-tracking & click-tracking (SMTP) | ✅ | ✅ |
-| Full data sovereignty — everything in your container | ✅ | ✅ |
+| Full data sovereignty - everything in your container | ✅ | ✅ |
 
 🔗 **Try it live:** [cp.mailtoinbox.vip](https://cp.mailtoinbox.vip) (user: `admin` / password: `demo`)
 
